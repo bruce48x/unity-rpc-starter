@@ -1,0 +1,16 @@
+{
+  "name": "Game.Rpc.Example",
+  "references": [
+    "Game.Rpc.Contracts",
+    "Game.Rpc.Runtime"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": true,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
