@@ -4,7 +4,7 @@ This repository is a starter skeleton for a **strongly-typed RPC** framework for
 - iOS (IL2CPP) and HybridCLR (hot-update)
 - Shared Contracts (`interface` + DTO) between client and server
 - Transport switchability (TCP / WebSocket / KCP) behind a single abstraction
-- MemoryPack for DTO serialization (UPM)
+- MemoryPack for DTO serialization
 
 ## What is included
 - `Assets/Scripts/Rpc/Contracts`: Attributes + example DTOs + example service interface
@@ -24,13 +24,3 @@ then you can remove the manual stubs in `Assets/Scripts/Rpc/GeneratedManual`.
 2. Ensure packages resolve (MemoryPack should be present).
 3. Enter Play Mode and run `RpcSmokeTest` scene-less test (see `Assets/Scripts/Rpc/Example/RpcSmokeTest.cs`).
    - By default it uses the **LoopbackTransport** (in-memory) so you can test RPC logic without networking.
-
-## Push to GitHub
-```bash
-git init
-git add .
-git commit -m "init: unity rpc starter"
-git branch -M main
-git remote add origin <your-github-repo-url>
-git push -u origin main
-```

@@ -35,9 +35,9 @@ namespace Game.Rpc.Example
         private sealed class PlayerServiceImpl : IPlayerService
         {
             public ValueTask<LoginReply> LoginAsync(LoginRequest req)
-                => ValueTask.FromResult(new LoginReply { Code = 0, Token = "token-demo" });
+                => new ValueTask<LoginReply>(new LoginReply { Code = 0, Token = "token-demo" });
 
-            public ValueTask PingAsync() => ValueTask.CompletedTask;
+            public ValueTask PingAsync() => default;
         }
     }
 }

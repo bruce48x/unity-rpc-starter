@@ -1,6 +1,7 @@
 {
   "dependencies": {
-    "com.cysharp.memorypack": "1.21.4",
+    "com.github-glitchenzo.nugetforunity": "4.5.0",
+    "com.unity.ide.rider": "3.0.39",
     "com.unity.ide.visualstudio": "2.0.23",
     "com.unity.test-framework": "1.1.33"
   },
@@ -9,7 +10,7 @@
       "name": "OpenUPM",
       "url": "https://package.openupm.com",
       "scopes": [
-        "com.cysharp.memorypack"
+        "com.github-glitchenzo.nugetforunity"
       ]
     }
   ]
