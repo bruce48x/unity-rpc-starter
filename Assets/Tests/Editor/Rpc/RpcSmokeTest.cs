@@ -1,14 +1,27 @@
+using System.Collections;
 using System.Threading.Tasks;
 using Game.Rpc.Contracts;
 using Game.Rpc.Runtime;
 using Game.Rpc.Runtime.GeneratedManual;
 using UnityEngine;
+using UnityEngine.TestTools;
 
-namespace Game.Rpc.Example
+namespace Tests.Editor.Rpc
 {
     public sealed class RpcSmokeTest : MonoBehaviour
     {
-        private async void Start()
+        [UnityTest]
+        public IEnumerator Smoke_Test_Works()
+        {
+            var t = RunAsync();
+            // UnityTest 里用 IEnumerator 等待 Task 完成
+            yield return new WaitUntil(() => t.IsCompleted);
+
+            // 如果 Task 内部抛异常，这里要把异常"抛出来"，否则测试会假通过
+            if (t.IsFaulted) throw t.Exception;
+        }
+
+        private async Task RunAsync()
         {
             // Default: pure in-memory loopback so you can validate RPC plumbing without a server process.
             var cfg = new TransportConfig { Kind = TransportKind.Loopback };
