@@ -7,7 +7,7 @@ namespace Game.Rpc.Runtime
     {
         Ok = 0,
         NotFound = 1,
-        Exception = 2,
+        Exception = 2
     }
 
     [MemoryPackable]

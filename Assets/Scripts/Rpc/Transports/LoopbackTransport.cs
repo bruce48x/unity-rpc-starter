@@ -6,22 +6,13 @@ using System.Threading.Tasks;
 namespace Game.Rpc.Runtime
 {
     /// <summary>
-    /// In-memory transport for smoke tests. Two endpoints are paired.
-    /// Uses ConcurrentQueue + SemaphoreSlim (Unity/IL2CPP friendly).
+    ///     In-memory transport for smoke tests. Two endpoints are paired.
+    ///     Uses ConcurrentQueue + SemaphoreSlim (Unity/IL2CPP friendly).
     /// </summary>
     public sealed class LoopbackTransport : ITransport
     {
-        private sealed class Endpoint
-        {
-            public readonly ConcurrentQueue<ReadOnlyMemory<byte>> Queue = new();
-            public readonly SemaphoreSlim Signal = new(0);
-            public volatile bool Closed;
-        }
-
         private readonly Endpoint _in;
         private readonly Endpoint _out;
-
-        public bool IsConnected { get; private set; }
 
         private LoopbackTransport(Endpoint incoming, Endpoint outgoing)
         {
@@ -29,12 +20,7 @@ namespace Game.Rpc.Runtime
             _out = outgoing;
         }
 
-        public static (LoopbackTransport client, LoopbackTransport server) CreatePair()
-        {
-            var a = new Endpoint();
-            var b = new Endpoint();
-            return (new LoopbackTransport(a, b), new LoopbackTransport(b, a));
-        }
+        public bool IsConnected { get; private set; }
 
         public ValueTask ConnectAsync(CancellationToken ct = default)
         {
@@ -81,6 +67,20 @@ namespace Game.Rpc.Runtime
             // For editor/test use this is acceptable. If you want strict disposal, add a ref-count.
 
             return default;
+        }
+
+        public static (LoopbackTransport client, LoopbackTransport server) CreatePair()
+        {
+            var a = new Endpoint();
+            var b = new Endpoint();
+            return (new LoopbackTransport(a, b), new LoopbackTransport(b, a));
+        }
+
+        private sealed class Endpoint
+        {
+            public readonly ConcurrentQueue<ReadOnlyMemory<byte>> Queue = new();
+            public readonly SemaphoreSlim Signal = new(0);
+            public volatile bool Closed;
         }
     }
 }

@@ -12,26 +12,26 @@ namespace Game.Rpc.Runtime
         private readonly string _host;
         private readonly int _port;
 
-        private TcpClient? _client;
-        private NetworkStream? _stream;
-
         private readonly ConcurrentQueue<ReadOnlyMemory<byte>> _recvQueue = new();
         private readonly SemaphoreSlim _recvSignal = new(0);
-
-        private CancellationTokenSource? _cts;
-        private Task? _recvLoop;
 
         // Accumulator for stream reassembly
         private byte[] _accum = new byte[64 * 1024];
         private int _accumLen;
 
-        public bool IsConnected => _client?.Connected == true;
+        private TcpClient? _client;
+
+        private CancellationTokenSource? _cts;
+        private Task? _recvLoop;
+        private NetworkStream? _stream;
 
         public TcpTransport(string host, int port)
         {
             _host = host;
             _port = port;
         }
+
+        public bool IsConnected => _client?.Connected == true;
 
         public async ValueTask ConnectAsync(CancellationToken ct = default)
         {
@@ -66,6 +66,50 @@ namespace Game.Rpc.Runtime
             throw new InvalidOperationException("Receive signal without queued frame.");
         }
 
+        public async ValueTask DisposeAsync()
+        {
+            try
+            {
+                _cts?.Cancel();
+            }
+            catch
+            {
+            }
+
+            if (_recvLoop is not null)
+                try
+                {
+                    await _recvLoop.ConfigureAwait(false);
+                }
+                catch
+                {
+                }
+
+            _cts?.Dispose();
+            _cts = null;
+
+            try
+            {
+                _stream?.Dispose();
+            }
+            catch
+            {
+            }
+
+            try
+            {
+                _client?.Dispose();
+            }
+            catch
+            {
+            }
+
+            _stream = null;
+            _client = null;
+
+            // Do not dispose _recvSignal: in-flight awaits may still observe it.
+        }
+
         private async Task RecvLoopAsync(CancellationToken ct)
         {
             Exception? err = null;
@@ -78,7 +122,7 @@ namespace Game.Rpc.Runtime
                 {
                     if (_stream is null) break;
 
-                    int n = await _stream.ReadAsync(buf, 0, buf.Length, ct).ConfigureAwait(false);
+                    var n = await _stream.ReadAsync(buf, 0, buf.Length, ct).ConfigureAwait(false);
                     if (n <= 0) throw new IOException("Remote closed.");
 
                     AppendToAccum(buf, n);
@@ -97,8 +141,21 @@ namespace Game.Rpc.Runtime
                 _recvSignal.Release();
 
                 // Close socket
-                try { _stream?.Dispose(); } catch { }
-                try { _client?.Close(); } catch { }
+                try
+                {
+                    _stream?.Dispose();
+                }
+                catch
+                {
+                }
+
+                try
+                {
+                    _client?.Close();
+                }
+                catch
+                {
+                }
             }
         }
 
@@ -112,13 +169,13 @@ namespace Game.Rpc.Runtime
         private void DrainFramesFromAccum()
         {
             // We parse frames from _accum: [len(4)][payload(len)]...
-            int offset = 0;
+            var offset = 0;
 
             while (true)
             {
                 if (_accumLen - offset < 4) break;
 
-                uint len =
+                var len =
                     ((uint)_accum[offset] << 24) |
                     ((uint)_accum[offset + 1] << 16) |
                     ((uint)_accum[offset + 2] << 8) |
@@ -141,7 +198,7 @@ namespace Game.Rpc.Runtime
             if (offset == 0) return;
 
             // shift remaining bytes to start
-            int remaining = _accumLen - offset;
+            var remaining = _accumLen - offset;
             if (remaining > 0)
                 Buffer.BlockCopy(_accum, offset, _accum, 0, remaining);
 
@@ -152,31 +209,10 @@ namespace Game.Rpc.Runtime
         {
             if (_accum.Length >= needed) return;
 
-            int newCap = _accum.Length;
+            var newCap = _accum.Length;
             while (newCap < needed) newCap *= 2;
 
             Array.Resize(ref _accum, newCap);
-        }
-
-        public async ValueTask DisposeAsync()
-        {
-            try { _cts?.Cancel(); } catch { }
-
-            if (_recvLoop is not null)
-            {
-                try { await _recvLoop.ConfigureAwait(false); } catch { }
-            }
-
-            _cts?.Dispose();
-            _cts = null;
-
-            try { _stream?.Dispose(); } catch { }
-            try { _client?.Dispose(); } catch { }
-
-            _stream = null;
-            _client = null;
-
-            // Do not dispose _recvSignal: in-flight awaits may still observe it.
         }
     }
 }

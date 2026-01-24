@@ -10,12 +10,15 @@ namespace Game.Rpc.Runtime
     public sealed class WebSocketTransport : ITransport
     {
         private readonly Uri _uri;
-        private ClientWebSocket? _ws;
         private byte[] _accum = Array.Empty<byte>(); // simplistic accumulator
+        private ClientWebSocket? _ws;
+
+        public WebSocketTransport(Uri uri)
+        {
+            _uri = uri;
+        }
 
         public bool IsConnected => _ws?.State == WebSocketState.Open;
-
-        public WebSocketTransport(Uri uri) => _uri = uri;
 
         public async ValueTask ConnectAsync(CancellationToken ct = default)
         {
@@ -44,7 +47,7 @@ namespace Game.Rpc.Runtime
                         throw new IOException("WebSocket closed.");
 
                     // append
-                    int oldLen = _accum.Length;
+                    var oldLen = _accum.Length;
                     Array.Resize(ref _accum, oldLen + res.Count);
                     Array.Copy(tmp, 0, _accum, oldLen, res.Count);
 
@@ -52,8 +55,8 @@ namespace Game.Rpc.Runtime
                     var seq = new ReadOnlySequence<byte>(_accum);
                     if (LengthPrefix.TryUnpack(ref seq, out var payloadSeq))
                     {
-                        byte[] payload = payloadSeq.ToArray();
-                        byte[] remaining = seq.ToArray();
+                        var payload = payloadSeq.ToArray();
+                        var remaining = seq.ToArray();
                         _accum = remaining;
                         return payload;
                     }
@@ -69,7 +72,14 @@ namespace Game.Rpc.Runtime
         {
             if (_ws is not null)
             {
-                try { await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "bye", CancellationToken.None); } catch { }
+                try
+                {
+                    await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "bye", CancellationToken.None);
+                }
+                catch
+                {
+                }
+
                 _ws.Dispose();
             }
         }

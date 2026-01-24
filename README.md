@@ -12,8 +12,11 @@ This repository is a starter skeleton for a **strongly-typed RPC** framework for
 - `Assets/Scripts/Rpc/Transports`: TCP + ClientWebSocket transport, and a KCP **stub** transport
 - `Assets/Scripts/Rpc/GeneratedManual`: manually-written client stub + server binder for the example service (until Source Generator is plugged in)
 
-## MemoryPack installation (UPM)
-This project is wired to install MemoryPack via OpenUPM (see `Packages/manifest.json` and `Packages/packages-lock.json` once Unity resolves it).
+## NuGet installation
+This project is wired to install NuGetForUnity via OpenUPM (see `Packages/manifest.json` and `Packages/packages-lock.json` once Unity resolves it).
+
+## MemoryPack installation
+This project is wired to install MemoryPack via NuGetForUnity.
 
 ## Source Generator (planned)
 A Roslyn Source Generator project stub lives in `Tools/Rpc.SourceGen/`. Build it locally and add the analyzer DLL to Unity (Analyzer import),

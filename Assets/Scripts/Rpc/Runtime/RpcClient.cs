@@ -8,14 +8,33 @@ namespace Game.Rpc.Runtime
 {
     public sealed class RpcClient : IAsyncDisposable
     {
-        private readonly ITransport _transport;
-        private readonly ConcurrentDictionary<uint, TaskCompletionSource<RpcResponseEnvelope>> _pending = new();
         private readonly CancellationTokenSource _cts = new();
-
-        private Task? _recvLoop;
+        private readonly ConcurrentDictionary<uint, TaskCompletionSource<RpcResponseEnvelope>> _pending = new();
+        private readonly ITransport _transport;
         private uint _nextId = 1;
 
-        public RpcClient(ITransport transport) => _transport = transport;
+        private Task? _recvLoop;
+
+        public RpcClient(ITransport transport)
+        {
+            _transport = transport;
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            _cts.Cancel();
+            if (_recvLoop is not null)
+                try
+                {
+                    await _recvLoop.ConfigureAwait(false);
+                }
+                catch
+                {
+                }
+
+            await _transport.DisposeAsync().ConfigureAwait(false);
+            _cts.Dispose();
+        }
 
         public async ValueTask StartAsync(CancellationToken ct = default)
         {
@@ -23,15 +42,16 @@ namespace Game.Rpc.Runtime
             _recvLoop = Task.Run(ReceiveLoopAsync);
         }
 
-        public async ValueTask<TResult> CallAsync<TArg, TResult>(int serviceId, int methodId, TArg? arg, CancellationToken ct = default)
+        public async ValueTask<TResult> CallAsync<TArg, TResult>(int serviceId, int methodId, TArg? arg,
+            CancellationToken ct = default)
         {
-            uint id = unchecked(_nextId++);
+            var id = unchecked(_nextId++);
             var tcs = new TaskCompletionSource<RpcResponseEnvelope>(TaskCreationOptions.RunContinuationsAsynchronously);
             _pending[id] = tcs;
 
             try
             {
-                byte[] argBytes = arg is null ? Array.Empty<byte>() : MemoryPackSerializer.Serialize(arg);
+                var argBytes = arg is null ? Array.Empty<byte>() : MemoryPackSerializer.Serialize(arg);
 
                 var req = new RpcRequestEnvelope
                 {
@@ -41,7 +61,7 @@ namespace Game.Rpc.Runtime
                     Payload = argBytes
                 };
 
-                byte[] reqBytes = MemoryPackSerializer.Serialize(req);
+                var reqBytes = MemoryPackSerializer.Serialize(req);
                 await _transport.SendFrameAsync(reqBytes, ct);
 
                 using var reg = ct.Register(() =>
@@ -76,17 +96,6 @@ namespace Game.Rpc.Runtime
                 if (_pending.TryRemove(resp.RequestId, out var tcs))
                     tcs.TrySetResult(resp);
             }
-        }
-
-        public async ValueTask DisposeAsync()
-        {
-            _cts.Cancel();
-            if (_recvLoop is not null)
-            {
-                try { await _recvLoop.ConfigureAwait(false); } catch { }
-            }
-            await _transport.DisposeAsync().ConfigureAwait(false);
-            _cts.Dispose();
         }
     }
 }

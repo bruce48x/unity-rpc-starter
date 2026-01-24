@@ -1,8 +1,8 @@
 using System.Threading.Tasks;
-using UnityEngine;
 using Game.Rpc.Contracts;
 using Game.Rpc.Runtime;
 using Game.Rpc.Runtime.GeneratedManual;
+using UnityEngine;
 
 namespace Game.Rpc.Example
 {
@@ -35,9 +35,14 @@ namespace Game.Rpc.Example
         private sealed class PlayerServiceImpl : IPlayerService
         {
             public ValueTask<LoginReply> LoginAsync(LoginRequest req)
-                => new ValueTask<LoginReply>(new LoginReply { Code = 0, Token = "token-demo" });
+            {
+                return new ValueTask<LoginReply>(new LoginReply { Code = 0, Token = "token-demo" });
+            }
 
-            public ValueTask PingAsync() => default;
+            public ValueTask PingAsync()
+            {
+                return default;
+            }
         }
     }
 }

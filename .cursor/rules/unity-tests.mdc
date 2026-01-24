@@ -2,42 +2,71 @@
 alwaysApply: true
 ---
 
-# Unity Unit Test Rules (NUnit)
+# Unity Unit Test Rules (NUnit + Unity Test Framework)
 
 ## Scope
-Applies to all test code under `Assets/Tests/**` and any assemblies ending with `.Tests`.
+Applies to all test code under:
+- `Assets/Tests/**`
+- any assembly ending with `.Tests` / `.Tests.Editor` / `.Tests.PlayMode`
 
-## NUnit visibility / Test Assembly
-- Every test assembly MUST be an `.asmdef` marked as a Test Assembly by including:
+## Assembly Definition (asmdef) rules
+### EditMode tests (recommended default)
+- EditMode tests MUST live under `Assets/Tests/Editor/**`.
+- EditMode test assemblies MUST set:
+  - `"includePlatforms": ["Editor"]`
   - `"optionalUnityReferences": ["TestAssemblies"]`
-- Test assemblies SHOULD reference only:
+- EditMode test assemblies SHOULD reference only:
   - `Game.Rpc.Contracts`
   - `Game.Rpc.Runtime`
-  - (and any other explicitly approved runtime assemblies)
+  - `Game.Rpc.Runtime.GeneratedManual` (temporary; remove once Source Generator is integrated)
+
+### PlayMode tests
+- PlayMode tests MUST live under `Assets/Tests/PlayMode/**` (or an asmdef not restricted to Editor).
+- PlayMode test assemblies MUST include:
+  - `"optionalUnityReferences": ["TestAssemblies"]`
 
 ## Assert usage (avoid ambiguity)
 - Tests MUST use NUnit assertions only.
-- In every test file, add the alias:
+- Every test file MUST include:
   - `using NUnitAssert = NUnit.Framework.Assert;`
 - All assertions MUST use `NUnitAssert.*` (e.g., `NUnitAssert.AreEqual(...)`).
 - DO NOT use `Assert.*` without qualification.
 - DO NOT use `UnityEngine.Assertions.Assert` in tests.
 
-## Unity/IL2CPP compatibility constraints (tests included)
-Because the project targets iOS/IL2CPP + HybridCLR:
-- DO NOT use `System.Threading.Channels` anywhere in Unity client code, including tests.
-- DO NOT use `System.IO.Pipelines` in Unity client code, including tests.
-- For `ValueTask`:
-  - DO NOT use `ValueTask.CompletedTask` or `ValueTask.FromResult` (may be missing in Unity profile).
-  - Use:
-    - `return default;` for `ValueTask`
-    - `return new ValueTask<T>(value);` for `ValueTask<T>`
+## Async test rule (critical)
+- Due to Unity/NUnit runner compatibility, DO NOT write async tests as `[Test] async Task ...`.
+- Any test that needs `await` MUST be implemented as:
+  - `[UnityTest] public IEnumerator TestName()`
+  - internally run async logic via a `Task` and wait using `WaitUntil`.
 
-## Test types
-- Prefer **EditMode** tests for RPC/runtime logic (no scene needed).
-- Use **PlayMode** tests only when validating MonoBehaviour, scene lifecycle, or platform integration.
+### Required async test pattern
+Each async test MUST follow this template:
 
-## File template requirement (minimum)
-Each new test file MUST start with:
-- `using NUnit.Framework;`
-- `using NUnitAssert = NUnit.Framework.Assert;`
+```csharp
+using System.Collections;
+using System.Threading.Tasks;
+using NUnit.Framework;
+using NUnitAssert = NUnit.Framework.Assert;
+using UnityEngine.TestTools;
+
+public class ExampleTests
+{
+    [UnityTest]
+    public IEnumerator Example_Async_Test()
+    {
+        var t = RunAsync();
+
+        yield return new WaitUntil(() => t.IsCompleted);
+
+        if (t.IsFaulted)
+            throw t.Exception!;
+    }
+
+    private async Task RunAsync()
+    {
+        // async test logic using await
+        await Task.Yield();
+        NUnitAssert.True(true);
+    }
+}
+

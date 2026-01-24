@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 namespace Game.Rpc.Runtime
 {
     /// <summary>
-    /// KCP stub transport used to keep the abstraction stable until real KCP integration is plugged in.
-    /// Behaves like a simple async queue.
+    ///     KCP stub transport used to keep the abstraction stable until real KCP integration is plugged in.
+    ///     Behaves like a simple async queue.
     /// </summary>
     public sealed class KcpTransportStub : ITransport
     {

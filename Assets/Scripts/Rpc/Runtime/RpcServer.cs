@@ -10,16 +10,21 @@ namespace Game.Rpc.Runtime
 
     public sealed class RpcServer
     {
-        private readonly ITransport _transport;
         private readonly Dictionary<(int serviceId, int methodId), RpcHandler> _handlers = new();
+        private readonly ITransport _transport;
 
         private CancellationTokenSource? _cts;
         private Task? _loop;
 
-        public RpcServer(ITransport transport) => _transport = transport;
+        public RpcServer(ITransport transport)
+        {
+            _transport = transport;
+        }
 
         public void Register(int serviceId, int methodId, RpcHandler handler)
-            => _handlers[(serviceId, methodId)] = handler;
+        {
+            _handlers[(serviceId, methodId)] = handler;
+        }
 
         public async ValueTask StartAsync(CancellationToken ct = default)
         {
@@ -40,7 +45,6 @@ namespace Game.Rpc.Runtime
 
                 RpcResponseEnvelope resp;
                 if (_handlers.TryGetValue((req.ServiceId, req.MethodId), out var handler))
-                {
                     try
                     {
                         resp = await handler(req, ct).ConfigureAwait(false);
@@ -52,20 +56,17 @@ namespace Game.Rpc.Runtime
                             RequestId = req.RequestId,
                             Status = RpcStatus.Exception,
                             Payload = Array.Empty<byte>(),
-                            ErrorMessage = ex.ToString(),
+                            ErrorMessage = ex.ToString()
                         };
                     }
-                }
                 else
-                {
                     resp = new RpcResponseEnvelope
                     {
                         RequestId = req.RequestId,
                         Status = RpcStatus.NotFound,
                         Payload = Array.Empty<byte>(),
-                        ErrorMessage = $"No handler for {req.ServiceId}:{req.MethodId}",
+                        ErrorMessage = $"No handler for {req.ServiceId}:{req.MethodId}"
                     };
-                }
 
                 var respBytes = MemoryPackSerializer.Serialize(resp);
                 await _transport.SendFrameAsync(respBytes, ct).ConfigureAwait(false);
@@ -77,9 +78,14 @@ namespace Game.Rpc.Runtime
             if (_cts is null) return;
             _cts.Cancel();
             if (_loop is not null)
-            {
-                try { await _loop.ConfigureAwait(false); } catch { }
-            }
+                try
+                {
+                    await _loop.ConfigureAwait(false);
+                }
+                catch
+                {
+                }
+
             _cts.Dispose();
             _cts = null;
         }
