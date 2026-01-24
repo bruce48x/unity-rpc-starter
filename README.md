@@ -22,8 +22,9 @@ This project is wired to install MemoryPack via NuGetForUnity.
 A Roslyn Source Generator project stub lives in `Tools/Rpc.SourceGen/`. Build it locally and add the analyzer DLL to Unity (Analyzer import),
 then you can remove the manual stubs in `Assets/Scripts/Rpc/GeneratedManual`.
 
-## Quick smoke test
+## Tests
 1. Open the project in Unity 2022 LTS.
 2. Ensure packages resolve (MemoryPack should be present).
-3. Enter Play Mode and run `RpcSmokeTest` scene-less test (see `Assets/Scripts/Rpc/Example/RpcSmokeTest.cs`).
-   - By default it uses the **LoopbackTransport** (in-memory) so you can test RPC logic without networking.
+3. open `Window` -> `General` -> `Test Runner` ， click `EditMode`, click `Run All`
+
+See CONTRIBUTING.md for architecture, testing, and platform constraints.
