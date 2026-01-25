@@ -100,3 +100,9 @@ InitTestScene*.unity*
 
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
+
+# Keep /server .NET project (override *.csproj, *.sln above)
+!/server/**/*.csproj
+!/server/**/*.sln
+/server/**/bin/
+/server/**/obj/

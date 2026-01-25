@@ -1,5 +1,11 @@
 {
   "dependencies": {
+    "com.bruce.rpc.contracts": {
+      "version": "file:com.bruce.rpc.contracts",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
     "com.github-glitchenzo.nugetforunity": {
       "version": "4.5.0",
       "depth": 0,
