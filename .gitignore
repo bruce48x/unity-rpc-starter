@@ -106,3 +106,7 @@ InitTestScene*.unity*
 !/server/**/*.sln
 /server/**/bin/
 /server/**/obj/
+
+# Source Generator
+Tools/Rpc.SourceGen/bin/
+Tools/Rpc.SourceGen/obj/

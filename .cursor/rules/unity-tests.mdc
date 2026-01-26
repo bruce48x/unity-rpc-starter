@@ -18,7 +18,6 @@ Applies to all test code under:
 - EditMode test assemblies SHOULD reference only:
   - `Game.Rpc.Contracts`
   - `Game.Rpc.Runtime`
-  - `Game.Rpc.Runtime.GeneratedManual` (temporary; remove once Source Generator is integrated)
 
 ### PlayMode tests
 - PlayMode tests MUST live under `Assets/Tests/PlayMode/**` (or an asmdef not restricted to Editor).

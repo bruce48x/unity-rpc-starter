@@ -168,17 +168,17 @@ NUnitAssert.*
 
 ---
 
-## 9. Source Generator Policy
+## 9. Code Generation Policy
 
-Until the Roslyn Source Generator is fully integrated:
+RPC client stubs and server binders are **auto-generated** in the Unity Editor when contracts change.
+You can also run the menu manually: **`Tools` → `RPC` → `Generate RPC Code`**.
 
-- Manual stubs in `Assets/Scripts/Rpc/GeneratedManual` are the source of truth.
+- Generated files are written to `Assets/Scripts/Rpc/GeneratedManual/` and **must be committed**.
+- **DO NOT** manually edit generated files; they will be overwritten.
 - Generated code MUST:
   - Be deterministic
   - Avoid reflection-heavy logic
   - Be compatible with IL2CPP AOT
-
-Once the generator is active, manual stubs will be removed.
 
 ---
 
