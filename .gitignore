@@ -108,5 +108,6 @@ InitTestScene*.unity*
 /server/**/obj/
 
 # Source Generator
+!Tools/RpcCodeGen/RpcCodeGen.csproj
 Tools/RpcCodeGen/bin/
 Tools/RpcCodeGen/obj/
