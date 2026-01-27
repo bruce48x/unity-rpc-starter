@@ -40,6 +40,9 @@ namespace Tests.Editor.Rpc
             var reply = await proxy.LoginAsync(new LoginRequest { Account = "a", Password = "b" });
 
             NUnitAssert.AreEqual("ok", reply.Token);
+            
+            await proxy.PingAsync();
+            Debug.Log("Ping ok.");
 
             // 可选：清理（避免测试进程残留后台任务）
             await server.StopAsync();

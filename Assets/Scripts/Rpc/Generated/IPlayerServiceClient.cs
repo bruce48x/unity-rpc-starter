@@ -12,9 +12,9 @@ namespace Game.Rpc.Runtime.Generated
 
         public IPlayerServiceClient(RpcClient client) { _client = client; }
 
-        public async ValueTask<Game.Rpc.Contracts.LoginReply> LoginAsync(Game.Rpc.Contracts.LoginRequest req)
+        public async ValueTask<LoginReply> LoginAsync(LoginRequest req)
         {
-            return await _client.CallAsync<Game.Rpc.Contracts.LoginRequest, Game.Rpc.Contracts.LoginReply>(ServiceId, 1, req, CancellationToken.None);
+            return await _client.CallAsync<LoginRequest, LoginReply>(ServiceId, 1, req, CancellationToken.None);
         }
 
         public async ValueTask PingAsync()

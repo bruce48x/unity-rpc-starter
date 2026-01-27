@@ -12,7 +12,7 @@ namespace Game.Rpc.Runtime.Generated
         {
             server.Register(ServiceId, 1, async (req, ct) =>
             {
-                var arg = MemoryPackSerializer.Deserialize<Game.Rpc.Contracts.LoginRequest>(req.Payload)!;
+                var arg = MemoryPackSerializer.Deserialize<LoginRequest>(req.Payload)!;
                 var resp = await impl.LoginAsync(arg);
                 return new RpcResponseEnvelope { RequestId = req.RequestId, Status = RpcStatus.Ok, Payload = MemoryPackSerializer.Serialize(resp) };
             });
