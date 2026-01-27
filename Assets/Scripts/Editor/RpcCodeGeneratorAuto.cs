@@ -7,7 +7,7 @@ namespace Game.Rpc.Editor
     {
         private const string ContractsPackagePath = "Packages/com.bruce.rpc.contracts/";
         private const string ContractsAssetsPath = "Assets/Scripts/Rpc/Contracts/";
-        private const string GeneratedPath = "Assets/Scripts/Rpc/GeneratedManual/";
+        private const string GeneratedPath = "Assets/Scripts/Rpc/Generated/";
 
         private static bool _pending;
 

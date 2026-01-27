@@ -10,7 +10,7 @@ This repository is a starter skeleton for a **strongly-typed RPC** framework for
 - `Assets/Scripts/Rpc/Contracts`: Attributes + example DTOs + example service interface
 - `Assets/Scripts/Rpc/Runtime`: Transport abstraction + framing + RPC client/server cores
 - `Assets/Scripts/Rpc/Transports`: TCP + ClientWebSocket transport, and a KCP **stub** transport
-- `Assets/Scripts/Rpc/GeneratedManual`: generated client stubs + server binders (checked in)
+- `Assets/Scripts/Rpc/Generated`: generated client stubs + server binders (checked in)
 
 ## NuGet installation
 This project is wired to install NuGetForUnity via OpenUPM (see `Packages/manifest.json` and `Packages/packages-lock.json` once Unity resolves it).
@@ -22,7 +22,7 @@ This project is wired to install MemoryPack via NuGetForUnity.
 Stubs are **auto-generated** in the Unity Editor when contracts change. You can also run it manually via
 **`Tools` → `RPC` → `Generate RPC Code`**.
 
-Generated files are written to `Assets/Scripts/Rpc/GeneratedManual/` and should be committed.
+Generated files are written to `Assets/Scripts/Rpc/Generated/` and should be committed.
 
 ## Tests
 1. Open the project in Unity 2022 LTS.

@@ -2,7 +2,7 @@
 using Game.Rpc.Runtime;
 using MemoryPack;
 
-namespace Game.Rpc.Runtime.GeneratedManual
+namespace Game.Rpc.Runtime.Generated
 {
     public static class IPlayerServiceBinder
     {

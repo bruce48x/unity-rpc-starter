@@ -1,10 +1,10 @@
 using Game.Rpc.Contracts;
 using MemoryPack;
 
-namespace Game.Rpc.Runtime.GeneratedManual
+namespace Game.Rpc.Runtime.Generated
 {
     /// <summary>
-    ///     Server binder for IPlayerService. Mirrors Assets/Scripts/Rpc/GeneratedManual/IPlayerServiceBinder
+    ///     Server binder for IPlayerService. Mirrors Assets/Scripts/Rpc/Generated/IPlayerServiceBinder
     ///     for wire compatibility with the Unity RPC client.
     /// </summary>
     public static class IPlayerServiceBinder

@@ -44,7 +44,7 @@ dotnet run --project Game.Rpc.Server -- 20001
 
 ## 扩展服务与认证
 
-- **新增 RPC 方法**：在 `IPlayerService` 或新接口上添加方法，在 `IPlayerServiceBinder`（或新 Binder）中注册；Unity 端需同步更新 Contracts 与 GeneratedManual 的 Client/Binder。
+- **新增 RPC 方法**：在 `IPlayerService` 或新接口上添加方法，在 `IPlayerServiceBinder`（或新 Binder）中注册；Unity 端需同步更新 Contracts 与 Generated 的 Client/Binder。
 - **认证**：在 `PlayerServiceImpl.LoginAsync` 中接入你的账号、密码校验与 Token 签发逻辑；可将 `Token` 写入 `LoginReply`，由客户端在后续请求中按你们的约定携带。
 
 ## 依赖
@@ -55,4 +55,4 @@ dotnet run --project Game.Rpc.Server -- 20001
 ## 参考
 
 - [CONTRIBUTING.md](../CONTRIBUTING.md)：架构、传输、测试等约定
-- `Assets/Scripts/Rpc/`：Unity 端 Contracts、Runtime、Transports、GeneratedManual
+- `Assets/Scripts/Rpc/`：Unity 端 Contracts、Runtime、Transports、Generated

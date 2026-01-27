@@ -5,7 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Game.Rpc.Contracts;
 using Game.Rpc.Runtime;
-using Game.Rpc.Runtime.GeneratedManual;
+using Game.Rpc.Runtime.Generated;
 
 const int DefaultPort = 20000;
 

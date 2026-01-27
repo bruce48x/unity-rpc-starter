@@ -12,7 +12,7 @@ namespace Game.Rpc.Editor
 {
     public static class RpcCodeGenerator
     {
-        private const string OutputPath = "Assets/Scripts/Rpc/GeneratedManual";
+        private const string OutputPath = "Assets/Scripts/Rpc/Generated";
         public static bool IsGenerating { get; private set; }
 
         [MenuItem("Tools/RPC/Generate RPC Code")]
@@ -152,7 +152,7 @@ namespace Game.Rpc.Editor
             var ifaceName = iface.Name;
 
             var clientBody = new StringBuilder();
-            clientBody.Append("using System.Threading;\nusing System.Threading.Tasks;\nusing Game.Rpc.Contracts;\nusing Game.Rpc.Runtime;\n\nnamespace Game.Rpc.Runtime.GeneratedManual\n{\n");
+            clientBody.Append("using System.Threading;\nusing System.Threading.Tasks;\nusing Game.Rpc.Contracts;\nusing Game.Rpc.Runtime;\n\nnamespace Game.Rpc.Runtime.Generated\n{\n");
             clientBody.Append("    public sealed class ").Append(ifaceName).Append("Client : ").Append(ifaceName).Append("\n    {\n");
             clientBody.Append("        private const int ServiceId = ").Append(svc.ServiceId).Append(";\n");
             clientBody.Append("        private readonly RpcClient _client;\n\n");
@@ -179,7 +179,7 @@ namespace Game.Rpc.Editor
             clientBody.Append("    }\n}\n");
 
             var binderSb = new StringBuilder();
-            binderSb.Append("using Game.Rpc.Contracts;\nusing Game.Rpc.Runtime;\nusing MemoryPack;\n\nnamespace Game.Rpc.Runtime.GeneratedManual\n{\n");
+            binderSb.Append("using Game.Rpc.Contracts;\nusing Game.Rpc.Runtime;\nusing MemoryPack;\n\nnamespace Game.Rpc.Runtime.Generated\n{\n");
             binderSb.Append("    public static class ").Append(ifaceName).Append("Binder\n    {\n");
             binderSb.Append("        private const int ServiceId = ").Append(svc.ServiceId).Append(";\n\n");
             binderSb.Append("        public static void Bind(RpcServer server, ").Append(ifaceName).Append(" impl)\n        {\n");

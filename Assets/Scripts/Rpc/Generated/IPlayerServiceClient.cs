@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Game.Rpc.Contracts;
 using Game.Rpc.Runtime;
 
-namespace Game.Rpc.Runtime.GeneratedManual
+namespace Game.Rpc.Runtime.Generated
 {
     public sealed class IPlayerServiceClient : IPlayerService
     {

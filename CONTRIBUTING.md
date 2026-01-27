@@ -173,7 +173,7 @@ NUnitAssert.*
 RPC client stubs and server binders are **auto-generated** in the Unity Editor when contracts change.
 You can also run the menu manually: **`Tools` → `RPC` → `Generate RPC Code`**.
 
-- Generated files are written to `Assets/Scripts/Rpc/GeneratedManual/` and **must be committed**.
+- Generated files are written to `Assets/Scripts/Rpc/Generated/` and **must be committed**.
 - **DO NOT** manually edit generated files; they will be overwritten.
 - Generated code MUST:
   - Be deterministic
