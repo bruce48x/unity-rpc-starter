@@ -29,18 +29,18 @@ namespace Tests.Editor.Rpc
             var clientTransport = TransportFactory.Create(cfg, out var serverTransport);
 
             var server = new RpcServer(serverTransport!);
-            IPlayerServiceBinder.Bind(server, new Impl());
+            PlayerServiceBinder.Bind(server, new Impl());
             await server.StartAsync();
 
             var client = new RpcClient(clientTransport);
             await client.StartAsync();
 
-            var proxy = new IPlayerServiceClient(client);
+            var proxy = new PlayerServiceClient(client);
 
             var reply = await proxy.LoginAsync(new LoginRequest { Account = "a", Password = "b" });
 
             NUnitAssert.AreEqual("ok", reply.Token);
-            
+
             await proxy.PingAsync();
             Debug.Log("Ping ok.");
 

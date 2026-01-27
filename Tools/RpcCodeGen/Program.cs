@@ -7,6 +7,7 @@ internal static class Program
 {
     private const string ContractsRelativePath = "Packages/com.bruce.rpc.contracts";
     private const string OutputRelativePath = "Assets/Scripts/Rpc/Generated";
+    private const string BinderOutputRelativePath = "Assets/Tests/Editor/Rpc";
 
     private static int Main(string[] args)
     {
@@ -16,7 +17,7 @@ internal static class Program
             return 0;
         }
 
-        if (!TryResolvePaths(args, out var contractsPath, out var outputPath, out var error))
+        if (!TryResolvePaths(args, out var contractsPath, out var outputPath, out var binderOutputPath, out var error))
         {
             Console.Error.WriteLine(error);
             PrintUsage();
@@ -31,6 +32,7 @@ internal static class Program
         }
 
         Directory.CreateDirectory(outputPath);
+        Directory.CreateDirectory(binderOutputPath);
 
         var generated = 0;
         foreach (var svc in services)
@@ -38,13 +40,15 @@ internal static class Program
             var (client, binder) = GenerateCode(svc);
             if (client != null)
             {
-                File.WriteAllText(Path.Combine(outputPath, $"{svc.InterfaceName}Client.cs"), client, Encoding.UTF8);
+                var clientTypeName = GetClientTypeName(svc.InterfaceName);
+                File.WriteAllText(Path.Combine(outputPath, $"{clientTypeName}.cs"), client, Encoding.UTF8);
                 generated++;
             }
 
             if (binder != null)
             {
-                File.WriteAllText(Path.Combine(outputPath, $"{svc.InterfaceName}Binder.cs"), binder, Encoding.UTF8);
+                var binderTypeName = GetBinderTypeName(svc.InterfaceName);
+                File.WriteAllText(Path.Combine(binderOutputPath, $"{binderTypeName}.cs"), binder, Encoding.UTF8);
                 generated++;
             }
         }
@@ -59,18 +63,21 @@ internal static class Program
         Console.WriteLine("  dotnet run --project Tools/RpcCodeGen -- [options]");
         Console.WriteLine();
         Console.WriteLine("Options:");
-        Console.WriteLine("  --contracts <path>   Path to contract sources");
-        Console.WriteLine("  --output <path>      Output directory for generated files");
+        Console.WriteLine("  --contracts <path>      Path to contract sources");
+        Console.WriteLine("  --output <path>         Output directory for generated clients");
+        Console.WriteLine("  --binder-output <path>  Output directory for generated binders");
     }
 
     private static bool TryResolvePaths(
         string[] args,
         out string contractsPath,
         out string outputPath,
+        out string binderOutputPath,
         out string error)
     {
         contractsPath = string.Empty;
         outputPath = string.Empty;
+        binderOutputPath = string.Empty;
         error = string.Empty;
 
         for (var i = 0; i < args.Length; i++)
@@ -83,6 +90,10 @@ internal static class Program
             else if (arg == "--output" && i + 1 < args.Length)
             {
                 outputPath = args[++i];
+            }
+            else if (arg == "--binder-output" && i + 1 < args.Length)
+            {
+                binderOutputPath = args[++i];
             }
             else
             {
@@ -105,6 +116,10 @@ internal static class Program
         outputPath = string.IsNullOrWhiteSpace(outputPath)
             ? Path.Combine(repoRoot, OutputRelativePath)
             : Path.GetFullPath(outputPath);
+
+        binderOutputPath = string.IsNullOrWhiteSpace(binderOutputPath)
+            ? Path.Combine(repoRoot, BinderOutputRelativePath)
+            : Path.GetFullPath(binderOutputPath);
 
         if (!Directory.Exists(contractsPath))
         {
@@ -270,13 +285,14 @@ internal static class Program
     private static (string? Client, string? Binder) GenerateCode(RpcServiceInfo svc)
     {
         var ifaceName = svc.InterfaceName;
+        var clientTypeName = GetClientTypeName(ifaceName);
 
         var clientBody = new StringBuilder();
         clientBody.Append("using System.Threading;\nusing System.Threading.Tasks;\nusing Game.Rpc.Contracts;\nusing Game.Rpc.Runtime;\n\nnamespace Game.Rpc.Runtime.Generated\n{\n");
-        clientBody.Append("    public sealed class ").Append(ifaceName).Append("Client : ").Append(ifaceName).Append("\n    {\n");
+        clientBody.Append("    public sealed class ").Append(clientTypeName).Append(" : ").Append(ifaceName).Append("\n    {\n");
         clientBody.Append("        private const int ServiceId = ").Append(svc.ServiceId).Append(";\n");
         clientBody.Append("        private readonly RpcClient _client;\n\n");
-        clientBody.Append("        public ").Append(ifaceName).Append("Client(RpcClient client) { _client = client; }\n\n");
+        clientBody.Append("        public ").Append(clientTypeName).Append("(RpcClient client) { _client = client; }\n\n");
 
         foreach (var m in svc.Methods)
         {
@@ -299,9 +315,10 @@ internal static class Program
         }
         clientBody.Append("    }\n}\n");
 
+        var binderTypeName = GetBinderTypeName(ifaceName);
         var binderSb = new StringBuilder();
         binderSb.Append("using Game.Rpc.Contracts;\nusing Game.Rpc.Runtime;\nusing MemoryPack;\n\nnamespace Game.Rpc.Runtime.Generated\n{\n");
-        binderSb.Append("    public static class ").Append(ifaceName).Append("Binder\n    {\n");
+        binderSb.Append("    public static class ").Append(binderTypeName).Append("\n    {\n");
         binderSb.Append("        private const int ServiceId = ").Append(svc.ServiceId).Append(";\n\n");
         binderSb.Append("        public static void Bind(RpcServer server, ").Append(ifaceName).Append(" impl)\n        {\n");
 
@@ -334,6 +351,24 @@ internal static class Program
         binderSb.Append("        }\n    }\n}\n");
 
         return (clientBody.ToString(), binderSb.ToString());
+    }
+
+    private static string GetBinderTypeName(string ifaceName)
+    {
+        return $"{GetServiceTypeName(ifaceName)}Binder";
+    }
+
+    private static string GetClientTypeName(string ifaceName)
+    {
+        return $"{GetServiceTypeName(ifaceName)}Client";
+    }
+
+    private static string GetServiceTypeName(string ifaceName)
+    {
+        if (ifaceName.Length > 1 && ifaceName[0] == 'I' && char.IsUpper(ifaceName[1]))
+            return ifaceName.Substring(1);
+
+        return ifaceName;
     }
 
     private sealed class RpcServiceInfo

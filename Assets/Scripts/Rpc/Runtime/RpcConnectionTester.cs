@@ -18,25 +18,23 @@ namespace Game.Rpc.Runtime
             Error
         }
 
-        public event Action<ConnectionState, string?>? StatusChanged;
+        [Header("Transport")] public TransportKind Kind = TransportKind.Tcp;
 
-        [Header("Transport")]
-        public TransportKind Kind = TransportKind.Tcp;
         public string Host = "127.0.0.1";
         public int Port = 20000;
         public string WsUrl = "ws://127.0.0.1:20001/rpc";
 
-        [Header("Login")]
-        public string Account = "a";
+        [Header("Login")] public string Account = "a";
+
         public string Password = "b";
 
         public bool AutoConnect = true;
 
         private RpcClient? _client;
-        private IPlayerServiceClient? _proxy;
         private CancellationTokenSource? _cts;
-        private ConnectionState _state = ConnectionState.Idle;
         private bool _disconnectedDuringConnect;
+        private PlayerServiceClient? _proxy;
+        private ConnectionState _state = ConnectionState.Idle;
 
         private async void Start()
         {
@@ -45,6 +43,13 @@ namespace Game.Rpc.Runtime
 
             await ConnectAndTestAsync();
         }
+
+        private async void OnDestroy()
+        {
+            await CleanupAsync(true);
+        }
+
+        public event Action<ConnectionState, string?>? StatusChanged;
 
         public async Task ConnectAndTestAsync()
         {
@@ -75,7 +80,7 @@ namespace Game.Rpc.Runtime
                 if (_disconnectedDuringConnect)
                     throw new InvalidOperationException("Connection closed.");
 
-                _proxy = new IPlayerServiceClient(_client);
+                _proxy = new PlayerServiceClient(_client);
 
                 var reply = await _proxy.LoginAsync(new LoginRequest
                 {
@@ -105,11 +110,6 @@ namespace Game.Rpc.Runtime
         public void ConnectFromUi()
         {
             _ = ConnectAndTestAsync();
-        }
-
-        private async void OnDestroy()
-        {
-            await CleanupAsync(true);
         }
 
         private async Task CleanupAsync(bool notifyDisconnected)

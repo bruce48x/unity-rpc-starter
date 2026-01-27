@@ -20,11 +20,11 @@ namespace Game.Rpc.Runtime
         private int _accumLen;
 
         private TcpClient? _client;
+        private volatile bool _closed;
 
         private CancellationTokenSource? _cts;
         private Task? _recvLoop;
         private NetworkStream? _stream;
-        private volatile bool _closed;
 
         public TcpTransport(string host, int port)
         {

@@ -1,0 +1,22 @@
+---
+description: Unity client uses C# 9.0 (avoid file-scoped namespace)
+globs: "{Assets,Packages/com.bruce.rpc.contracts}/**/*.cs"
+alwaysApply: false
+---
+
+# Unity C# 9.0 Compatibility
+
+- Unity client code and shared contracts must compile with C# 9.0.
+- Do not use C# 10+ syntax such as file-scoped namespaces.
+
+Example:
+```csharp
+// ✅ OK (C# 9.0)
+namespace Game.Rpc.Contracts
+{
+    public interface IFoo { }
+}
+
+// ❌ NOT OK (C# 10+)
+// namespace Game.Rpc.Contracts;
+```

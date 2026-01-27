@@ -53,15 +53,15 @@ dotnet run --project Game.Rpc.Server -- 20000 20001 0.0.0.0
 
 | 目录 / 文件 | 说明 |
 |-------------|------|
-| `Contracts/` | `IPlayerService`、`LoginRequest`/`LoginReply`、`RpcAttributes`，与 `Assets/Scripts/Rpc/Contracts` 结构一致 |
+| `Contracts/` | `IPlayerService`、`LoginRequest`/`LoginReply`、`RpcAttributes`，与 `Packages/com.bruce.rpc.contracts` 结构一致 |
 | `Runtime/` | `RpcEnvelopes`、`LengthPrefix`、`ITransport`、`RpcServer`，与 Unity 的 `Game.Rpc.Runtime` 协议一致 |
 | `Transports/` | `TcpServerTransport` / `WebSocketServerTransport` / `KcpServerTransport`，实现 `ITransport` |
-| `Binder/` | `IPlayerServiceBinder`，将 `IPlayerService` 实现注册到 `RpcServer` |
+| `Binder/` | `PlayerServiceBinder`，将 `IPlayerService` 实现注册到 `RpcServer` |
 | `Program.cs` | TCP + WebSocket accept 循环，每连接一个 `RpcServer` 并绑定 `IPlayerService` |
 
 ## 扩展服务与认证
 
-- **新增 RPC 方法**：在 `IPlayerService` 或新接口上添加方法，在 `IPlayerServiceBinder`（或新 Binder）中注册；Unity 端需同步更新 Contracts 与 Generated 的 Client/Binder。
+- **新增 RPC 方法**：在 `IPlayerService` 或新接口上添加方法，在 `PlayerServiceBinder`（或新 Binder）中注册；Unity 端需同步更新 Contracts 与 Generated 的 Client/Binder。
 - **认证**：在 `PlayerServiceImpl.LoginAsync` 中接入你的账号、密码校验与 Token 签发逻辑；可将 `Token` 写入 `LoginReply`，由客户端在后续请求中按你们的约定携带。
 
 ## 依赖
@@ -73,4 +73,5 @@ dotnet run --project Game.Rpc.Server -- 20000 20001 0.0.0.0
 ## 参考
 
 - [CONTRIBUTING.md](../CONTRIBUTING.md)：架构、传输、测试等约定
-- `Assets/Scripts/Rpc/`：Unity 端 Contracts、Runtime、Transports、Generated
+- `Assets/Scripts/Rpc/`：Unity 端 Runtime、Transports、Generated
+- `Packages/com.bruce.rpc.contracts/`：Contracts

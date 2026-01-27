@@ -12,8 +12,9 @@ namespace Game.Rpc.Runtime
 
         public RpcConnectionTester? Tester;
 
-        [Header("UI References (optional)")]
-        [SerializeField] private Canvas? _canvas;
+        [Header("UI References (optional)")] [SerializeField]
+        private Canvas? _canvas;
+
         [SerializeField] private InputField? _hostField;
         [SerializeField] private InputField? _portField;
         [SerializeField] private InputField? _wsUrlField;
@@ -298,7 +299,8 @@ namespace Game.Rpc.Runtime
             labelLayout.preferredWidth = 90f;
             labelLayout.minWidth = 90f;
 
-            var inputGo = new GameObject($"{label}Input", typeof(RectTransform), typeof(Image), typeof(InputField), typeof(LayoutElement));
+            var inputGo = new GameObject($"{label}Input", typeof(RectTransform), typeof(Image), typeof(InputField),
+                typeof(LayoutElement));
             inputGo.transform.SetParent(row, false);
 
             var inputImage = inputGo.GetComponent<Image>();
@@ -350,7 +352,8 @@ namespace Game.Rpc.Runtime
 
         private Button CreateButton(Transform parent, string label)
         {
-            var buttonGo = new GameObject($"{label}Button", typeof(RectTransform), typeof(Image), typeof(Button), typeof(LayoutElement));
+            var buttonGo = new GameObject($"{label}Button", typeof(RectTransform), typeof(Image), typeof(Button),
+                typeof(LayoutElement));
             buttonGo.transform.SetParent(parent, false);
 
             var image = buttonGo.GetComponent<Image>();

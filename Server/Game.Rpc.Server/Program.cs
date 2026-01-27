@@ -1,9 +1,6 @@
-using System;
+using System.Buffers.Binary;
 using System.Net;
 using System.Net.Sockets;
-using System.Buffers.Binary;
-using System.Threading;
-using System.Threading.Tasks;
 using Game.Rpc.Contracts;
 using Game.Rpc.Runtime;
 using Game.Rpc.Runtime.Generated;
@@ -70,7 +67,8 @@ static async Task RunTcpListenerAsync(int port, CancellationToken hostCt)
                 break;
             }
 
-            _ = RunConnectionAsync(new TcpServerTransport(client), client.Client.RemoteEndPoint?.ToString() ?? "?", hostCt);
+            _ = RunConnectionAsync(new TcpServerTransport(client), client.Client.RemoteEndPoint?.ToString() ?? "?",
+                hostCt);
         }
     }
     finally
@@ -87,7 +85,13 @@ static async Task RunWebSocketListenerAsync(string host, int port, CancellationT
 
     using var reg = hostCt.Register(() =>
     {
-        try { listener.Stop(); } catch { }
+        try
+        {
+            listener.Stop();
+        }
+        catch
+        {
+        }
     });
 
     try
@@ -168,8 +172,9 @@ static async Task HandleWebSocketClientAsync(HttpListenerContext ctx, Cancellati
 
     try
     {
-        var wsContext = await ctx.AcceptWebSocketAsync(subProtocol: null).ConfigureAwait(false);
-        await RunConnectionAsync(new WebSocketServerTransport(wsContext.WebSocket), remote, hostCt).ConfigureAwait(false);
+        var wsContext = await ctx.AcceptWebSocketAsync(null).ConfigureAwait(false);
+        await RunConnectionAsync(new WebSocketServerTransport(wsContext.WebSocket), remote, hostCt)
+            .ConfigureAwait(false);
     }
     catch (Exception ex)
     {
@@ -179,7 +184,9 @@ static async Task HandleWebSocketClientAsync(HttpListenerContext ctx, Cancellati
             ctx.Response.StatusCode = 500;
             ctx.Response.Close();
         }
-        catch { }
+        catch
+        {
+        }
     }
     finally
     {
@@ -203,7 +210,7 @@ static async Task RunConnectionAsync(ITransport transport, string remote, Cancel
     {
         server = new RpcServer(transport);
 
-        IPlayerServiceBinder.Bind(server, new PlayerServiceImpl());
+        PlayerServiceBinder.Bind(server, new PlayerServiceImpl());
         await server.StartAsync(hostCt).ConfigureAwait(false);
         await server.WaitForCompletionAsync().ConfigureAwait(false);
     }
@@ -242,5 +249,8 @@ internal sealed class PlayerServiceImpl : IPlayerService
         });
     }
 
-    public ValueTask PingAsync() => default;
+    public ValueTask PingAsync()
+    {
+        return default;
+    }
 }

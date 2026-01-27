@@ -7,7 +7,7 @@ This repository is a starter skeleton for a **strongly-typed RPC** framework for
 - MemoryPack for DTO serialization
 
 ## What is included
-- `Assets/Scripts/Rpc/Contracts`: Attributes + example DTOs + example service interface
+- `Packages/com.bruce.rpc.contracts`: Attributes + example DTOs + example service interface (shared by client/server)
 - `Assets/Scripts/Rpc/Runtime`: Transport abstraction + framing + RPC client/server cores
 - `Assets/Scripts/Rpc/Transports`: TCP + ClientWebSocket + KCP transports
 - `Assets/Scripts/Rpc/Generated`: generated client stubs + server binders (checked in)

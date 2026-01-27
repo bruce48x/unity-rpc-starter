@@ -15,8 +15,6 @@ namespace Game.Rpc.Runtime
 
         private Task? _recvLoop;
 
-        public event Action<Exception?>? Disconnected;
-
         public RpcClient(ITransport transport)
         {
             _transport = transport;
@@ -37,6 +35,8 @@ namespace Game.Rpc.Runtime
             await _transport.DisposeAsync().ConfigureAwait(false);
             _cts.Dispose();
         }
+
+        public event Action<Exception?>? Disconnected;
 
         public async ValueTask StartAsync(CancellationToken ct = default)
         {
