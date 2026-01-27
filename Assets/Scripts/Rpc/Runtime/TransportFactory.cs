@@ -7,7 +7,6 @@ namespace Game.Rpc.Runtime
         Loopback,
         Tcp,
         WebSocket,
-        KcpStub,
         Kcp
     }
 
@@ -32,7 +31,6 @@ namespace Game.Rpc.Runtime
                 TransportKind.Loopback => CreateLoopback(out pairedServerForLoopback),
                 TransportKind.Tcp => new TcpTransport(cfg.Host, cfg.Port),
                 TransportKind.WebSocket => new WebSocketTransport(new Uri(cfg.WsUrl)),
-                TransportKind.KcpStub => new KcpTransportStub(),
                 TransportKind.Kcp => new KcpTransport(cfg.Host, cfg.Port),
                 _ => throw new ArgumentOutOfRangeException(nameof(cfg.Kind))
             };

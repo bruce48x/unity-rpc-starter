@@ -47,8 +47,7 @@ dotnet run --project Game.Rpc.Server -- 20000 20001 0.0.0.0
 
 使用 KCP：
 
-- `Kind = TransportKind.KcpStub`
-- 客户端需要替换成真实 KCP Transport（该仓库目前仅提供 Stub）
+- `Kind = TransportKind.Kcp`
 
 ## 项目结构
 
