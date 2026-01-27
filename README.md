@@ -9,7 +9,7 @@ This repository is a starter skeleton for a **strongly-typed RPC** framework for
 ## What is included
 - `Assets/Scripts/Rpc/Contracts`: Attributes + example DTOs + example service interface
 - `Assets/Scripts/Rpc/Runtime`: Transport abstraction + framing + RPC client/server cores
-- `Assets/Scripts/Rpc/Transports`: TCP + ClientWebSocket transport, and a KCP **stub** transport
+- `Assets/Scripts/Rpc/Transports`: TCP + ClientWebSocket + KCP transports
 - `Assets/Scripts/Rpc/Generated`: generated client stubs + server binders (checked in)
 
 ## NuGet installation

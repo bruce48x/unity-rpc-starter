@@ -7,7 +7,8 @@ namespace Game.Rpc.Runtime
         Loopback,
         Tcp,
         WebSocket,
-        KcpStub
+        KcpStub,
+        Kcp
     }
 
     public sealed class TransportConfig
@@ -32,6 +33,7 @@ namespace Game.Rpc.Runtime
                 TransportKind.Tcp => new TcpTransport(cfg.Host, cfg.Port),
                 TransportKind.WebSocket => new WebSocketTransport(new Uri(cfg.WsUrl)),
                 TransportKind.KcpStub => new KcpTransportStub(),
+                TransportKind.Kcp => new KcpTransport(cfg.Host, cfg.Port),
                 _ => throw new ArgumentOutOfRangeException(nameof(cfg.Kind))
             };
         }

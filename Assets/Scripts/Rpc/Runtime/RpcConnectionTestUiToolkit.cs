@@ -6,6 +6,10 @@ namespace Game.Rpc.Runtime
 {
     public sealed class RpcConnectionTestUiToolkit : MonoBehaviour
     {
+        private const int DefaultTcpPort = 20000;
+        private const int DefaultWsPort = 20001;
+        private const int DefaultKcpPort = 20002;
+
         public RpcConnectionTester? Tester;
 
         [Header("UI References (optional)")]
@@ -17,6 +21,7 @@ namespace Game.Rpc.Runtime
         [SerializeField] private InputField? _passwordField;
         [SerializeField] private Button? _tcpButton;
         [SerializeField] private Button? _wsButton;
+        [SerializeField] private Button? _kcpButton;
         [SerializeField] private Button? _connectButton;
         [SerializeField] private Text? _statusText;
 
@@ -76,6 +81,8 @@ namespace Game.Rpc.Runtime
                 _tcpButton.onClick.AddListener(() => SetKind(TransportKind.Tcp));
             if (_wsButton is not null)
                 _wsButton.onClick.AddListener(() => SetKind(TransportKind.WebSocket));
+            if (_kcpButton is not null)
+                _kcpButton.onClick.AddListener(() => SetKind(TransportKind.Kcp));
             if (_connectButton is not null)
                 _connectButton.onClick.AddListener(Connect);
         }
@@ -98,6 +105,7 @@ namespace Game.Rpc.Runtime
                 return;
 
             Tester.Kind = kind;
+            ApplyKindDefaults(kind);
             SetStatus($"Transport set: {kind}");
         }
 
@@ -146,6 +154,26 @@ namespace Game.Rpc.Runtime
             SetStatus(message);
         }
 
+        private void ApplyKindDefaults(TransportKind kind)
+        {
+            if (_portField is null || _wsUrlField is null)
+                return;
+
+            switch (kind)
+            {
+                case TransportKind.Tcp:
+                    _portField.text = DefaultTcpPort.ToString();
+                    break;
+                case TransportKind.WebSocket:
+                    _portField.text = DefaultWsPort.ToString();
+                    _wsUrlField.text = $"ws://127.0.0.1:{DefaultWsPort}/rpc";
+                    break;
+                case TransportKind.Kcp:
+                    _portField.text = DefaultKcpPort.ToString();
+                    break;
+            }
+        }
+
         private void BuildRuntimeUi()
         {
             _font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
@@ -176,6 +204,7 @@ namespace Game.Rpc.Runtime
             var buttonRow = CreateRow(panel);
             _tcpButton = CreateButton(buttonRow, "TCP");
             _wsButton = CreateButton(buttonRow, "WebSocket");
+            _kcpButton = CreateButton(buttonRow, "KCP");
             _connectButton = CreateButton(buttonRow, "Connect");
 
             _statusText = CreateStatus(panel, "Idle");

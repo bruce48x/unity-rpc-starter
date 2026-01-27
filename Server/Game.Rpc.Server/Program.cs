@@ -1,6 +1,7 @@
 using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Buffers.Binary;
 using System.Threading;
 using System.Threading.Tasks;
 using Game.Rpc.Contracts;
@@ -9,10 +10,12 @@ using Game.Rpc.Runtime.Generated;
 
 const int DefaultTcpPort = 20000;
 const int DefaultWsPort = 20001;
+const int DefaultKcpPort = 20002;
 const string DefaultWsHost = "127.0.0.1";
 
 var tcpPort = DefaultTcpPort;
 var wsPort = DefaultWsPort;
+var kcpPort = DefaultKcpPort;
 var wsHost = DefaultWsHost;
 
 if (args.Length > 0 && int.TryParse(args[0], out var p))
@@ -21,6 +24,8 @@ if (args.Length > 1 && int.TryParse(args[1], out var wp))
     wsPort = wp;
 if (args.Length > 2 && !string.IsNullOrWhiteSpace(args[2]))
     wsHost = args[2];
+if (args.Length > 3 && int.TryParse(args[3], out var kp))
+    kcpPort = kp;
 
 using var cts = new CancellationTokenSource();
 Console.CancelKeyPress += (_, e) =>
@@ -31,13 +36,15 @@ Console.CancelKeyPress += (_, e) =>
 
 Console.WriteLine($"Game RPC Server TCP listening on 0.0.0.0:{tcpPort}. Press Ctrl+C to stop.");
 Console.WriteLine($"Game RPC Server WS listening on ws://{wsHost}:{wsPort}/rpc.");
+Console.WriteLine($"Game RPC Server KCP listening on 0.0.0.0:{kcpPort} (UDP).");
 
 var tcpTask = RunTcpListenerAsync(tcpPort, cts.Token);
 var wsTask = RunWebSocketListenerAsync(wsHost, wsPort, cts.Token);
+var kcpTask = RunKcpListenerAsync(kcpPort, cts.Token);
 
 try
 {
-    await Task.WhenAll(tcpTask, wsTask).ConfigureAwait(false);
+    await Task.WhenAll(tcpTask, wsTask, kcpTask).ConfigureAwait(false);
 }
 finally
 {
@@ -117,6 +124,43 @@ static async Task RunWebSocketListenerAsync(string host, int port, CancellationT
     }
 }
 
+static async Task RunKcpListenerAsync(int port, CancellationToken hostCt)
+{
+    while (!hostCt.IsCancellationRequested)
+    {
+        using var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+        socket.Bind(new IPEndPoint(IPAddress.Any, port));
+
+        var buffer = new byte[64 * 1024];
+        EndPoint remote = new IPEndPoint(IPAddress.Any, 0);
+
+        SocketReceiveFromResult res;
+        try
+        {
+            res = await socket.ReceiveFromAsync(buffer, SocketFlags.None, remote, hostCt).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            break;
+        }
+        catch (ObjectDisposedException)
+        {
+            break;
+        }
+
+        if (res.ReceivedBytes < 4)
+            continue;
+
+        var conv = BinaryPrimitives.ReadUInt32LittleEndian(buffer.AsSpan(0, 4));
+        var remoteEndPoint = res.RemoteEndPoint;
+        var remoteText = remoteEndPoint?.ToString() ?? "?";
+        Console.WriteLine($"[{remoteText}] KCP Connected (conv={conv}).");
+
+        var transport = new KcpServerTransport(socket, remoteEndPoint!, conv, buffer.AsMemory(0, res.ReceivedBytes));
+        await RunConnectionAsync(transport, remoteText, hostCt).ConfigureAwait(false);
+    }
+}
+
 static async Task HandleWebSocketClientAsync(HttpListenerContext ctx, CancellationToken hostCt)
 {
     var remote = ctx.Request.RemoteEndPoint?.ToString() ?? "?";
@@ -169,7 +213,7 @@ static async Task RunConnectionAsync(ITransport transport, string remote, Cancel
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"[{remote}] Error: {ex.Message}");
+        Console.WriteLine($"[{remote}] Error: {ex}");
     }
     finally
     {

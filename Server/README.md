@@ -18,10 +18,12 @@ dotnet build
 dotnet run --project Game.Rpc.Server
 ```
 
-指定端口（默认 TCP 20000、WS 20001）：
+指定端口（默认 TCP 20000、WS 20001、KCP 20002）：
+
+参数顺序：`tcpPort wsPort wsHost kcpPort`
 
 ```bash
-dotnet run --project Game.Rpc.Server -- 20000 20001
+dotnet run --project Game.Rpc.Server -- 20000 20001 127.0.0.1 20002
 ```
 
 指定 WS 绑定地址（默认 127.0.0.1）：
@@ -43,13 +45,18 @@ dotnet run --project Game.Rpc.Server -- 20000 20001 0.0.0.0
 - `Kind = TransportKind.WebSocket`
 - `WsUrl = "ws://127.0.0.1:20001/rpc"`
 
+使用 KCP：
+
+- `Kind = TransportKind.KcpStub`
+- 客户端需要替换成真实 KCP Transport（该仓库目前仅提供 Stub）
+
 ## 项目结构
 
 | 目录 / 文件 | 说明 |
 |-------------|------|
 | `Contracts/` | `IPlayerService`、`LoginRequest`/`LoginReply`、`RpcAttributes`，与 `Assets/Scripts/Rpc/Contracts` 结构一致 |
 | `Runtime/` | `RpcEnvelopes`、`LengthPrefix`、`ITransport`、`RpcServer`，与 Unity 的 `Game.Rpc.Runtime` 协议一致 |
-| `Transports/` | `TcpServerTransport` / `WebSocketServerTransport`，实现 `ITransport` |
+| `Transports/` | `TcpServerTransport` / `WebSocketServerTransport` / `KcpServerTransport`，实现 `ITransport` |
 | `Binder/` | `IPlayerServiceBinder`，将 `IPlayerService` 实现注册到 `RpcServer` |
 | `Program.cs` | TCP + WebSocket accept 循环，每连接一个 `RpcServer` 并绑定 `IPlayerService` |
 
@@ -62,6 +69,7 @@ dotnet run --project Game.Rpc.Server -- 20000 20001 0.0.0.0
 
 - .NET 8.0
 - [MemoryPack](https://github.com/Cysharp/MemoryPack) 1.21.4（与 Unity 端版本一致，保证序列化兼容）
+- [Kcp](https://www.nuget.org/packages/Kcp) 2.7.0（服务端 KCP 传输）
 
 ## 参考
 
