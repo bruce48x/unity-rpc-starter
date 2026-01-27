@@ -1,6 +1,6 @@
 # Game RPC Server
 
-与 [Unity RPC Starter](../README.md) 客户端配套的 **TCP 服务端**，实现与 Unity RPC 相同的协议与契约，便于本地联调与集成测试。
+与 [Unity RPC Starter](../README.md) 客户端配套的 **TCP / WebSocket 服务端**，实现与 Unity RPC 相同的协议与契约，便于本地联调与集成测试。
 
 ## 协议与契约（与 Unity 一致）
 
@@ -18,10 +18,16 @@ dotnet build
 dotnet run --project Game.Rpc.Server
 ```
 
-指定端口（默认 20000）：
+指定端口（默认 TCP 20000、WS 20001）：
 
 ```bash
-dotnet run --project Game.Rpc.Server -- 20001
+dotnet run --project Game.Rpc.Server -- 20000 20001
+```
+
+指定 WS 绑定地址（默认 127.0.0.1）：
+
+```bash
+dotnet run --project Game.Rpc.Server -- 20000 20001 0.0.0.0
 ```
 
 ## Unity 客户端配置
@@ -32,15 +38,20 @@ dotnet run --project Game.Rpc.Server -- 20001
 - `Host = "127.0.0.1"`（或本机 IP / 服务器 IP）
 - `Port = 20000`（与 `dotnet run` 所用端口一致）
 
+使用 WebSocket：
+
+- `Kind = TransportKind.WebSocket`
+- `WsUrl = "ws://127.0.0.1:20001/rpc"`
+
 ## 项目结构
 
 | 目录 / 文件 | 说明 |
 |-------------|------|
 | `Contracts/` | `IPlayerService`、`LoginRequest`/`LoginReply`、`RpcAttributes`，与 `Assets/Scripts/Rpc/Contracts` 结构一致 |
 | `Runtime/` | `RpcEnvelopes`、`LengthPrefix`、`ITransport`、`RpcServer`，与 Unity 的 `Game.Rpc.Runtime` 协议一致 |
-| `Transports/` | `TcpServerTransport`，包装 `TcpListener` 接受的 `TcpClient`，实现 `ITransport` |
+| `Transports/` | `TcpServerTransport` / `WebSocketServerTransport`，实现 `ITransport` |
 | `Binder/` | `IPlayerServiceBinder`，将 `IPlayerService` 实现注册到 `RpcServer` |
-| `Program.cs` | `TcpListener` accept 循环，每连接一个 `RpcServer` + `TcpServerTransport`，并绑定 `IPlayerService` |
+| `Program.cs` | TCP + WebSocket accept 循环，每连接一个 `RpcServer` 并绑定 `IPlayerService` |
 
 ## 扩展服务与认证
 

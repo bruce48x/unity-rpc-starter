@@ -24,7 +24,7 @@ namespace Game.Rpc.Runtime
         public TransportKind Kind = TransportKind.Tcp;
         public string Host = "127.0.0.1";
         public int Port = 20000;
-        public string WsUrl = "ws://127.0.0.1:20000/rpc";
+        public string WsUrl = "ws://127.0.0.1:20001/rpc";
 
         [Header("Login")]
         public string Account = "a";

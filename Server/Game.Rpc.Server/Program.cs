@@ -7,9 +7,20 @@ using Game.Rpc.Contracts;
 using Game.Rpc.Runtime;
 using Game.Rpc.Runtime.Generated;
 
-const int DefaultPort = 20000;
+const int DefaultTcpPort = 20000;
+const int DefaultWsPort = 20001;
+const string DefaultWsHost = "127.0.0.1";
 
-var port = args.Length > 0 && int.TryParse(args[0], out var p) ? p : DefaultPort;
+var tcpPort = DefaultTcpPort;
+var wsPort = DefaultWsPort;
+var wsHost = DefaultWsHost;
+
+if (args.Length > 0 && int.TryParse(args[0], out var p))
+    tcpPort = p;
+if (args.Length > 1 && int.TryParse(args[1], out var wp))
+    wsPort = wp;
+if (args.Length > 2 && !string.IsNullOrWhiteSpace(args[2]))
+    wsHost = args[2];
 
 using var cts = new CancellationTokenSource();
 Console.CancelKeyPress += (_, e) =>
@@ -18,44 +29,134 @@ Console.CancelKeyPress += (_, e) =>
     cts.Cancel();
 };
 
-var listener = new TcpListener(IPAddress.Any, port);
-listener.Start();
-Console.WriteLine($"Game RPC Server listening on 0.0.0.0:{port}. Press Ctrl+C to stop.");
+Console.WriteLine($"Game RPC Server TCP listening on 0.0.0.0:{tcpPort}. Press Ctrl+C to stop.");
+Console.WriteLine($"Game RPC Server WS listening on ws://{wsHost}:{wsPort}/rpc.");
+
+var tcpTask = RunTcpListenerAsync(tcpPort, cts.Token);
+var wsTask = RunWebSocketListenerAsync(wsHost, wsPort, cts.Token);
 
 try
 {
-    while (!cts.Token.IsCancellationRequested)
-    {
-        TcpClient client;
-        try
-        {
-            client = await listener.AcceptTcpClientAsync(cts.Token).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException)
-        {
-            break;
-        }
-
-        _ = RunConnectionAsync(client, cts.Token);
-    }
+    await Task.WhenAll(tcpTask, wsTask).ConfigureAwait(false);
 }
 finally
 {
-    listener.Stop();
     Console.WriteLine("Server stopped.");
 }
 
-static async Task RunConnectionAsync(TcpClient client, CancellationToken hostCt)
+static async Task RunTcpListenerAsync(int port, CancellationToken hostCt)
 {
-    var remote = client.Client.RemoteEndPoint?.ToString() ?? "?";
-    Console.WriteLine($"[{remote}] Connected.");
+    var listener = new TcpListener(IPAddress.Any, port);
+    listener.Start();
 
-    ITransport? transport = null;
+    try
+    {
+        while (!hostCt.IsCancellationRequested)
+        {
+            TcpClient client;
+            try
+            {
+                client = await listener.AcceptTcpClientAsync(hostCt).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+
+            _ = RunConnectionAsync(new TcpServerTransport(client), client.Client.RemoteEndPoint?.ToString() ?? "?", hostCt);
+        }
+    }
+    finally
+    {
+        listener.Stop();
+    }
+}
+
+static async Task RunWebSocketListenerAsync(string host, int port, CancellationToken hostCt)
+{
+    var listener = new HttpListener();
+    listener.Prefixes.Add(BuildWsPrefix(host, port));
+    listener.Start();
+
+    using var reg = hostCt.Register(() =>
+    {
+        try { listener.Stop(); } catch { }
+    });
+
+    try
+    {
+        while (!hostCt.IsCancellationRequested)
+        {
+            HttpListenerContext ctx;
+            try
+            {
+                ctx = await listener.GetContextAsync().ConfigureAwait(false);
+            }
+            catch (HttpListenerException)
+            {
+                break;
+            }
+            catch (ObjectDisposedException)
+            {
+                break;
+            }
+
+            if (!ctx.Request.IsWebSocketRequest)
+            {
+                ctx.Response.StatusCode = 400;
+                ctx.Response.Close();
+                continue;
+            }
+
+            _ = HandleWebSocketClientAsync(ctx, hostCt);
+        }
+    }
+    finally
+    {
+        listener.Close();
+    }
+}
+
+static async Task HandleWebSocketClientAsync(HttpListenerContext ctx, CancellationToken hostCt)
+{
+    var remote = ctx.Request.RemoteEndPoint?.ToString() ?? "?";
+    Console.WriteLine($"[{remote}] WS Connected.");
+
+    try
+    {
+        var wsContext = await ctx.AcceptWebSocketAsync(subProtocol: null).ConfigureAwait(false);
+        await RunConnectionAsync(new WebSocketServerTransport(wsContext.WebSocket), remote, hostCt).ConfigureAwait(false);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[{remote}] WS Error: {ex.Message}");
+        try
+        {
+            ctx.Response.StatusCode = 500;
+            ctx.Response.Close();
+        }
+        catch { }
+    }
+    finally
+    {
+        Console.WriteLine($"[{remote}] WS Disconnected.");
+    }
+}
+
+static string BuildWsPrefix(string host, int port)
+{
+    if (string.IsNullOrWhiteSpace(host) || host == "*" || host == "+" || host == "0.0.0.0")
+        return $"http://+:{port}/rpc/";
+
+    return $"http://{host}:{port}/rpc/";
+}
+
+static async Task RunConnectionAsync(ITransport transport, string remote, CancellationToken hostCt)
+{
     RpcServer? server = null;
 
     try
     {
-        transport = new TcpServerTransport(client);
         server = new RpcServer(transport);
 
         IPlayerServiceBinder.Bind(server, new PlayerServiceImpl());
@@ -75,8 +176,7 @@ static async Task RunConnectionAsync(TcpClient client, CancellationToken hostCt)
         if (server is not null)
             await server.StopAsync().ConfigureAwait(false);
 
-        if (transport is not null)
-            await transport.DisposeAsync().ConfigureAwait(false);
+        await transport.DisposeAsync().ConfigureAwait(false);
     }
 
     Console.WriteLine($"[{remote}] Disconnected.");

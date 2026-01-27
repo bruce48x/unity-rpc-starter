@@ -111,7 +111,7 @@ namespace Game.Rpc.Runtime
 
             var host = _hostField?.text ?? "127.0.0.1";
             var portText = _portField?.text ?? "20000";
-            var wsUrl = _wsUrlField?.text ?? "ws://127.0.0.1:20000/rpc";
+            var wsUrl = _wsUrlField?.text ?? "ws://127.0.0.1:20001/rpc";
             var account = _accountField?.text ?? "a";
             var password = _passwordField?.text ?? "b";
 
@@ -169,7 +169,7 @@ namespace Game.Rpc.Runtime
 
             _hostField = CreateLabeledInput(panel, "Host", "127.0.0.1", false);
             _portField = CreateLabeledInput(panel, "Port", "20000", false);
-            _wsUrlField = CreateLabeledInput(panel, "WS Url", "ws://127.0.0.1:20000/rpc", false);
+            _wsUrlField = CreateLabeledInput(panel, "WS Url", "ws://127.0.0.1:20001/rpc", false);
             _accountField = CreateLabeledInput(panel, "Account", "a", false);
             _passwordField = CreateLabeledInput(panel, "Password", "b", true);
 

@@ -47,7 +47,7 @@ MonoBehaviour:
   Kind: 1
   Host: 127.0.0.1
   Port: 20000
-  WsUrl: ws://127.0.0.1:20000/rpc
+  WsUrl: ws://127.0.0.1:20001/rpc
   Account: a
   Password: b
   AutoConnect: 0
