@@ -33,6 +33,23 @@ namespace Game.Rpc.Runtime
             _loop = Task.Run(LoopAsync);
         }
 
+        public async ValueTask WaitForCompletionAsync()
+        {
+            if (_loop is null)
+                return;
+
+            try
+            {
+                await _loop.ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+        }
+
         private async Task LoopAsync()
         {
             if (_cts is null) return;

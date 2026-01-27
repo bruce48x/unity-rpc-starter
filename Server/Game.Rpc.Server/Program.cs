@@ -60,6 +60,7 @@ static async Task RunConnectionAsync(TcpClient client, CancellationToken hostCt)
 
         IPlayerServiceBinder.Bind(server, new PlayerServiceImpl());
         await server.StartAsync(hostCt).ConfigureAwait(false);
+        await server.WaitForCompletionAsync().ConfigureAwait(false);
     }
     catch (OperationCanceledException)
     {

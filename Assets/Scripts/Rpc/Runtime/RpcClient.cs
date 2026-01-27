@@ -15,6 +15,8 @@ namespace Game.Rpc.Runtime
 
         private Task? _recvLoop;
 
+        public event Action<Exception?>? Disconnected;
+
         public RpcClient(ITransport transport)
         {
             _transport = transport;
@@ -88,14 +90,44 @@ namespace Game.Rpc.Runtime
         private async Task ReceiveLoopAsync()
         {
             var ct = _cts.Token;
-            while (!ct.IsCancellationRequested)
-            {
-                var frame = await _transport.ReceiveFrameAsync(ct).ConfigureAwait(false);
-                var resp = MemoryPackSerializer.Deserialize<RpcResponseEnvelope>(frame.Span)!;
+            Exception? err = null;
 
-                if (_pending.TryRemove(resp.RequestId, out var tcs))
-                    tcs.TrySetResult(resp);
+            try
+            {
+                while (!ct.IsCancellationRequested)
+                {
+                    var frame = await _transport.ReceiveFrameAsync(ct).ConfigureAwait(false);
+                    if (frame.IsEmpty)
+                        throw new InvalidOperationException("Transport closed.");
+
+                    var resp = MemoryPackSerializer.Deserialize<RpcResponseEnvelope>(frame.Span)!;
+
+                    if (_pending.TryRemove(resp.RequestId, out var tcs))
+                        tcs.TrySetResult(resp);
+                }
             }
+            catch (OperationCanceledException)
+            {
+            }
+            catch (Exception ex)
+            {
+                if (!ct.IsCancellationRequested)
+                    err = ex;
+            }
+            finally
+            {
+                if (err is not null)
+                    FailAllPending(err);
+
+                Disconnected?.Invoke(err);
+            }
+        }
+
+        private void FailAllPending(Exception ex)
+        {
+            foreach (var item in _pending)
+                if (_pending.TryRemove(item.Key, out var tcs))
+                    tcs.TrySetException(ex);
         }
     }
 }

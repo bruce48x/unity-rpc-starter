@@ -24,6 +24,7 @@ namespace Game.Rpc.Runtime
         private CancellationTokenSource? _cts;
         private Task? _recvLoop;
         private NetworkStream? _stream;
+        private volatile bool _closed;
 
         public TcpTransport(string host, int port)
         {
@@ -40,6 +41,7 @@ namespace Game.Rpc.Runtime
             _client = new TcpClient();
             await _client.ConnectAsync(_host, _port);
             _stream = _client.GetStream();
+            _closed = false;
 
             _cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
             _recvLoop = Task.Run(() => RecvLoopAsync(_cts.Token));
@@ -47,11 +49,24 @@ namespace Game.Rpc.Runtime
 
         public async ValueTask SendFrameAsync(ReadOnlyMemory<byte> frame, CancellationToken ct = default)
         {
-            if (_stream is null) throw new InvalidOperationException("Not connected.");
+            if (_stream is null || _closed) throw new InvalidOperationException("Not connected.");
 
             // pack: 4-byte big-endian length prefix + payload
             var packed = LengthPrefix.Pack(frame.Span);
-            await _stream.WriteAsync(packed, 0, packed.Length, ct).ConfigureAwait(false);
+            try
+            {
+                await _stream.WriteAsync(packed, 0, packed.Length, ct).ConfigureAwait(false);
+            }
+            catch (ObjectDisposedException ex)
+            {
+                _closed = true;
+                throw new InvalidOperationException("Connection closed.", ex);
+            }
+            catch (IOException ex)
+            {
+                _closed = true;
+                throw new InvalidOperationException("Connection closed.", ex);
+            }
         }
 
         public async ValueTask<ReadOnlyMemory<byte>> ReceiveFrameAsync(CancellationToken ct = default)
@@ -68,6 +83,7 @@ namespace Game.Rpc.Runtime
 
         public async ValueTask DisposeAsync()
         {
+            _closed = true;
             try
             {
                 _cts?.Cancel();
@@ -135,27 +151,12 @@ namespace Game.Rpc.Runtime
             }
             finally
             {
+                _closed = true;
+
                 // Unblock any waiters with a terminal signal.
                 // We enqueue an empty frame to indicate closure if needed.
                 _recvQueue.Enqueue(ReadOnlyMemory<byte>.Empty);
                 _recvSignal.Release();
-
-                // Close socket
-                try
-                {
-                    _stream?.Dispose();
-                }
-                catch
-                {
-                }
-
-                try
-                {
-                    _client?.Close();
-                }
-                catch
-                {
-                }
             }
         }
 
