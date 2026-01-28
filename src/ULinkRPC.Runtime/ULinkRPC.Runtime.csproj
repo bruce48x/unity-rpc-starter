@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.1;net8.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <PackageId>ULinkRPC.Runtime</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>ULinkRPC</Authors>
+    <Description>ULinkRPC runtime with TCP/KCP/WebSocket transports, compression, and encryption.</Description>
+    <PackageTags>rpc;unity;kcp;websocket;tcp</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MemoryPack" Version="1.21.4" />
+    <PackageReference Include="Kcp" Version="2.7.0" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
+    <PackageReference Include="System.Text.Json" Version="10.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\Assets\Scripts\Rpc\Runtime\*.cs"
+             Exclude="..\..\Assets\Scripts\Rpc\Runtime\RpcConnectionTester.cs;..\..\Assets\Scripts\Rpc\Runtime\RpcConnectionTestUiToolkit.cs" />
+    <Compile Include="..\..\Assets\Scripts\Rpc\Transports\*.cs" />
+    <Compile Include="..\..\Server\Game.Rpc.Server\Runtime\RpcServer.cs" />
+    <Compile Include="..\..\Server\Game.Rpc.Server\Transports\*.cs" />
+  </ItemGroup>
+</Project>

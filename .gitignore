@@ -107,6 +107,9 @@ InitTestScene*.unity*
 /server/**/bin/
 /server/**/obj/
 
+# Keep src NuGet projects
+!/src/**/*.csproj
+
 # Source Generator
 !Tools/RpcCodeGen/RpcCodeGen.csproj
 Tools/RpcCodeGen/bin/

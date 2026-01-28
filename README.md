@@ -1,4 +1,4 @@
-# Unity RPC Starter (Unity 2022 LTS)
+# ULinkRPC (Unity 2022 LTS)
 
 This repository is a starter skeleton for a **strongly-typed RPC** framework for **Unity + .NET**, designed to work with:
 - iOS (IL2CPP) and HybridCLR (hot-update)
@@ -7,13 +7,15 @@ This repository is a starter skeleton for a **strongly-typed RPC** framework for
 - Pluggable DTO serialization (MemoryPack by default)
 
 ## What is included
-- `Packages/com.bruce.rpc.contracts`: Attributes + example DTOs + example service interface (shared by client/server)
-- `Assets/Scripts/Rpc/Runtime`: Transport abstraction + framing + RPC client/server cores
-- `Assets/Scripts/Rpc/Transports`: TCP + ClientWebSocket + KCP transports
+- `Packages/com.bruce.rpc.contracts`: Contracts (Git project; user-defined)
+- `Assets/Scripts/Rpc/Runtime`: Unity runtime + framing + RPC client core
+- `Assets/Scripts/Rpc/Transports`: TCP + WebSocket + KCP transports (client)
 - `Assets/Scripts/Rpc/Generated`: generated client stubs + server binders (checked in)
+- `src/ULinkRPC.Runtime`: NuGet runtime (netstandard2.1 + net8.0)
 
 ## NuGet installation
-This project is wired to install NuGetForUnity via OpenUPM (see `Packages/manifest.json` and `Packages/packages-lock.json` once Unity resolves it).
+- Unity side uses NuGetForUnity (OpenUPM).
+- Runtime package: `ULinkRPC.Runtime` (targets netstandard2.1 + net8.0).
 
 ## Serialization
 Default serializer is MemoryPack, but you can switch to JSON (or your own) by providing
@@ -32,6 +34,9 @@ var server = new RpcServer(transport, serializer);
 Notes:
 - Client and server must use the same serializer.
 - DTOs still have `[MemoryPackable]` attributes; they are ignored by JSON.
+
+## Contracts (Git)
+Contracts should live in a user-defined Git repo (not NuGet). Keep client/server in sync.
 
 ## Transport security (compression / encryption)
 Enable compression and/or encryption per transport via `TransportConfig.Security`:
@@ -64,6 +69,11 @@ dotnet run --project Tools/RpcCodeGen --
 ```
 
 Generated files are written to `Assets/Scripts/Rpc/Generated/` and should be committed.
+
+## Packing ULinkRPC.Runtime
+```
+dotnet pack src/ULinkRPC.Runtime/ULinkRPC.Runtime.csproj -c Release
+```
 
 ## Tests
 1. Open the project in Unity 2022 LTS.

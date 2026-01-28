@@ -1,6 +1,6 @@
-# Game RPC Server
+# ULinkRPC Server
 
-与 [Unity RPC Starter](../README.md) 客户端配套的 **TCP / WebSocket 服务端**，实现与 Unity RPC 相同的协议与契约，便于本地联调与集成测试。
+与 [ULinkRPC](../README.md) 客户端配套的 **TCP / WebSocket 服务端**，实现与 Unity RPC 相同的协议与契约，便于本地联调与集成测试。
 
 ## 协议与契约（与 Unity 一致）
 
@@ -82,6 +82,11 @@ dotnet run --project Game.Rpc.Server -- --compress --compress-threshold 1024 --e
 - .NET 8.0
 - [MemoryPack](https://github.com/Cysharp/MemoryPack) 1.21.4（与 Unity 端版本一致，保证序列化兼容）
 - [Kcp](https://www.nuget.org/packages/Kcp) 2.7.0（服务端 KCP 传输）
+
+## Runtime 包
+
+- `ULinkRPC.Runtime`（netstandard2.1 + net8.0）
+- Contracts 为 Git 项目，不通过 NuGet 发布
 
 ## 参考
 
