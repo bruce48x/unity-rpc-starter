@@ -116,3 +116,6 @@ InitTestScene*.unity*
 !Tools/RpcCodeGen/RpcCodeGen.csproj
 Tools/RpcCodeGen/bin/
 Tools/RpcCodeGen/obj/
+
+# NuGet artifacts
+/artifacts/
