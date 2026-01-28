@@ -10,13 +10,17 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Kcp" Version="2.7.0"/>
-        <PackageReference Include="MemoryPack" Version="1.21.4"/>
         <PackageReference Include="MemoryPack.Generator" Version="1.21.4">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <Compile Include="..\..\Packages\com.bruce.rpc.contracts\**\*.cs"/>
+        <ProjectReference Include="..\..\src\ULinkRPC.Runtime\ULinkRPC.Runtime.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Remove="Runtime\**\*.cs" />
+        <Compile Remove="Transports\**\*.cs" />
     </ItemGroup>
 
 </Project>
