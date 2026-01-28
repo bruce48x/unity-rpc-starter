@@ -1,158 +1,96 @@
 # Contributing Guide
 
-This document defines **mandatory engineering rules** for contributing to this repository.
-
-This project targets **Unity 2022 LTS** with **iOS / IL2CPP / HybridCLR** in mind.
-Stability, predictability, and platform compatibility take priority over convenience APIs.
+Mandatory engineering rules for this repo. Target is **Unity 2022 LTS** with **iOS / IL2CPP / HybridCLR**; stability and platform compatibility take priority.
 
 ---
 
-## 1. Project Architecture Rules
+## 1. Architecture & Sources
 
-### Assembly boundaries (asmdef)
-The project is intentionally split into multiple assemblies:
+### Assemblies
+- `Game.Rpc.Contracts`: RPC interfaces, DTOs, attributes (`RpcService`, `RpcMethod`); **no UnityEngine**.
+- `Game.Rpc.Runtime`: transport abstraction + implementations (TCP / WebSocket / KCP / Loopback), framing, RPC core.
+  - Unity sources: `Assets/Scripts/Rpc/**`
+  - Server sources: `src/ULinkRPC.Runtime/**`
+- Unity test assemblies: `*.Tests.Editor` / `*.Tests.PlayMode` (NUnit + Unity Test Framework)
+- Server-side .NET projects live under `Server/**` (including `Game.Rpc.Server.Tests`).
 
-- `Game.Rpc.Contracts`
-  - RPC interfaces
-  - DTOs
-  - Attributes (`RpcService`, `RpcMethod`)
-  - **No UnityEngine dependency**
-- `Game.Rpc.Runtime`
-  - Transport abstraction
-  - Framing
-  - RPC client/server core
-- `Game.Rpc.Transports`
-  - TCP / WebSocket / KCP (stub) implementations
-- Test assemblies (`*.Tests.Editor`, `*.Tests.PlayMode`)
-  - NUnit + Unity Test Framework only
+No circular dependencies between assemblies.
 
-Do **NOT** introduce circular dependencies between assemblies.
-
-### RPC contracts single source of truth
-- Do NOT create or duplicate RPC Contracts (interfaces/DTOs/attributes) under `/server`.
-- All contracts live ONLY in `Packages/com.bruce.rpc.contracts/`.
+### Contracts are the single source of truth
+- Do NOT duplicate contracts under `Server/**`.
+- All contracts live in `Packages/com.bruce.rpc.contracts/`.
 - Server projects must include contracts by linking sources:
-  - `<Compile Include="..\..\Packages\com.bruce.rpc.contracts\**\*.cs" />`
-- If a server change requires a contract update, modify the shared contract files in the package, not by re-creating them in server.
+  ```xml
+  <Compile Include="..\..\Packages\com.bruce.rpc.contracts\**\*.cs" />
+  ```
+- If server changes require a contract update, edit the package, not server-local copies.
 
 ---
 
-## 2. Platform Constraints (Unity / iOS / IL2CPP)
+## 2. Unity / IL2CPP Constraints
 
-Because this project targets **iOS + IL2CPP**, the following APIs are **forbidden** anywhere in Unity client code (including tests):
-
+Forbidden in Unity client code (including tests):
 - `System.Threading.Channels`
 - `System.IO.Pipelines`
 - `System.Reflection.Emit`
 - Runtime code generation
-- APIs that rely on JIT-only behavior
+- APIs relying on JIT-only behavior
 
-If an API is commonly used on server-side .NET but not explicitly supported by Unity IL2CPP, assume it is **unsafe** unless proven otherwise.
+If an API is common on server-side .NET but not explicitly supported by Unity IL2CPP, treat it as **unsafe**.
 
-### Unity C# 9.0 Compatibility
-- Unity client code and shared contracts must compile with C# 9.0.
-- Do not use C# 10+ syntax such as file-scoped namespaces.
-
-Example:
-```csharp
-// ✅ OK (C# 9.0)
-namespace Game.Rpc.Contracts
-{
-    public interface IFoo { }
-}
-
-// ❌ NOT OK (C# 10+)
-// namespace Game.Rpc.Contracts;
-```
+### C# version
+Unity client code and shared contracts must compile with **C# 9.0** (no C# 10+ syntax).
 
 ---
 
 ## 3. Async & ValueTask Rules
 
-### ValueTask usage
-`ValueTask` is preferred over `Task` for performance reasons, but **only a safe subset is allowed**.
-
-#### Allowed patterns
+Allowed `ValueTask` patterns only:
 - `return default;` for `ValueTask`
-- `return new ValueTask<T>(value);` for `ValueTask<T>`
+- `return new ValueTask<T>(value);`
 - `async` methods returning `ValueTask<T>` with `return value;`
 
-#### Forbidden patterns
+Forbidden:
 - `ValueTask.CompletedTask`
 - `ValueTask.FromResult(...)`
 
-These APIs may be missing in Unity’s .NET profile and must not be used.
+---
+
+## 4. Transport & Networking
+
+- All transports must implement `ITransport`.
+- RPC code must not depend on a specific transport.
+- Transport implementations must be cancellation-safe, avoid background thread leaks, and be explicit about disconnect behavior.
+- Prefer **LoopbackTransport** for local testing.
 
 ---
 
-## 4. Transport & Networking Rules
+## 5. Testing
 
-- All transports MUST implement `ITransport`.
-- RPC code MUST NOT depend on a specific transport implementation.
-- Transport implementations must:
-  - Be cancellation-safe
-  - Avoid background thread leaks
-  - Be explicit about disconnect behavior
-
-For testing and local validation, prefer **LoopbackTransport**.
-
----
-
-## 5. Testing Rules (Very Important)
-
-### Test framework
-- All tests use **NUnit + Unity Test Framework**
-- Tests must live under `Assets/Tests/**`
-- These rules apply to any assembly ending with `.Tests` / `.Tests.Editor` / `.Tests.PlayMode`
-
-### EditMode vs PlayMode
-- **EditMode tests** are the default for RPC/runtime logic.
-- PlayMode tests are only for:
-  - MonoBehaviour lifecycle
-  - Scene integration
-  - Platform-specific behavior
-
-### Test assembly requirements
-- Test assemblies MUST be marked as test assemblies via:
+### Unity tests
+- NUnit + Unity Test Framework only.
+- Live under `Assets/Tests/**`.
+- EditMode tests default for RPC/runtime logic; PlayMode only for MonoBehaviour/scene/platform-specific behavior.
+- EditMode asmdefs must include:
   ```json
-  "optionalUnityReferences": ["TestAssemblies"]
-  ```
-- EditMode test assemblies MUST restrict platforms:
-  ```json
+  "optionalUnityReferences": ["TestAssemblies"],
   "includePlatforms": ["Editor"]
   ```
-- EditMode tests MUST live under `Assets/Tests/Editor/**`.
-- PlayMode tests MUST live under `Assets/Tests/PlayMode/**` (or an asmdef not restricted to Editor).
-- EditMode test assemblies SHOULD reference only:
-  - `Game.Rpc.Contracts`
-  - `Game.Rpc.Runtime`
+- EditMode tests must live under `Assets/Tests/Editor/**`.
+- PlayMode tests must live under `Assets/Tests/PlayMode/**` (or an asmdef not restricted to Editor).
+- EditMode test asmdefs should reference only `Game.Rpc.Contracts` and `Game.Rpc.Runtime`.
 
----
+### Server tests
+- `Server/**` uses xUnit and standard .NET test conventions.
 
-## 6. Async Test Rule (Critical)
-
-Due to Unity Test Runner and NUnit compatibility constraints:
-
-❌ **DO NOT** write async tests as:
-```csharp
-[Test]
-public async Task MyTest() { ... }
-```
-
-✅ **All async tests MUST use**:
-- `[UnityTest]`
-- `IEnumerator`
-- Internal `Task` + `WaitUntil`
-
-### Required async test pattern
+### Async Unity tests (critical)
+Do **not** use `async Task` with `[Test]`. Use `[UnityTest]` + `IEnumerator`:
 ```csharp
 [UnityTest]
 public IEnumerator Example_Async_Test()
 {
     var task = RunAsync();
-
     yield return new WaitUntil(() => task.IsCompleted);
-
     if (task.IsFaulted)
         throw task.Exception!;
 }
@@ -163,61 +101,40 @@ private async Task RunAsync()
 }
 ```
 
-This rule applies to **both EditMode and PlayMode tests**.
-
----
-
-## 7. Assertion Rules
-
-Because Unity injects its own `Assert`, ambiguity must be avoided.
-
-### Mandatory rule
-Every test file MUST include:
+### Assertions (Unity tests)
+Each Unity test file must include:
 ```csharp
 using NUnitAssert = NUnit.Framework.Assert;
 ```
-
-All assertions MUST use:
-```csharp
-NUnitAssert.*
-```
-
-❌ Do NOT use:
-- `Assert.*` (unqualified)
-- `UnityEngine.Assertions.Assert`
+And use `NUnitAssert.*` only (no unqualified `Assert.*` or `UnityEngine.Assertions.Assert`).
 
 ---
 
-## 8. Code Style & Safety
+## 6. Code Style & Safety
 
-- Prefer explicit lifetimes (`DisposeAsync`, `StopAsync`)
-- Clean up background loops in tests
-- Avoid implicit global state
-- Favor clarity over micro-optimizations in shared infrastructure code
-
----
-
-## 9. Code Generation Policy
-
-RPC client stubs and server binders are generated by the CLI tool:
-
-```
-dotnet run --project tools/RpcCodeGen --
-```
-
-- Generated files are written to `Assets/Scripts/Rpc/Generated/` and **must be committed**.
-- **DO NOT** manually edit generated files; they will be overwritten.
-- Generated code MUST:
-  - Be deterministic
-  - Avoid reflection-heavy logic
-  - Be compatible with IL2CPP AOT
+- Prefer explicit lifetimes (`DisposeAsync`, `StopAsync`).
+- Clean up background loops in tests.
+- Avoid implicit global state.
+- Favor clarity over micro-optimizations in shared infrastructure.
 
 ---
 
-## 10. AI / Code Assistant Notes
+## 7. Code Generation
 
-When using AI tools (Claude Code, Cursor, Codex, etc.):
+RPC client stubs and Unity test binders are generated by:
+```
+dotnet run --project Tools/RpcCodeGen --
+```
+Or use `gen.sh` / `gen.ps1`.
 
-- Always respect the rules in this document.
-- If a generated change violates Unity / IL2CPP constraints, it must be corrected before committing.
-- Prefer changes that preserve existing assembly boundaries and test coverage.
+- Generated client stubs go to `Assets/Scripts/Rpc/Generated/` and must be committed.
+- Do **not** edit generated files; they will be overwritten.
+- Generated code must be deterministic, IL2CPP-friendly, and avoid heavy reflection.
+
+---
+
+## 8. AI / Code Assistant Notes
+
+- Follow all rules above.
+- Fix any Unity / IL2CPP violations before committing.
+- Prefer changes that preserve assembly boundaries and test coverage.

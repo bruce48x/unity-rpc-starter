@@ -1,6 +1,6 @@
 # ULinkRPC Server
 
-与 [ULinkRPC](../README.md) 客户端配套的 **TCP / WebSocket 服务端**，实现与 Unity RPC 相同的协议与契约，便于本地联调与集成测试。
+与 [ULinkRPC](../README.md) 客户端配套的 **TCP / WebSocket / KCP 服务端**，实现与 Unity RPC 相同的协议与契约，便于本地联调与集成测试。
 
 ## 协议与契约（与 Unity 一致）
 
@@ -13,7 +13,7 @@
 ## 构建与运行
 
 ```bash
-cd server
+cd Server
 dotnet build
 dotnet run --project Game.Rpc.Server
 ```
@@ -61,16 +61,17 @@ dotnet run --project Game.Rpc.Server -- --compress --compress-threshold 1024 --e
 使用 KCP：
 
 - `Kind = TransportKind.Kcp`
+- `Host = "127.0.0.1"`（或本机 IP / 服务器 IP）
+- `Port = 20002`
 
 ## 项目结构
 
 | 目录 / 文件 | 说明 |
 |-------------|------|
-| `Contracts/` | `IPlayerService`、`LoginRequest`/`LoginReply`、`RpcAttributes`，与 `Packages/com.bruce.rpc.contracts` 结构一致 |
-| `Runtime/` | `RpcEnvelopes`、`LengthPrefix`、`ITransport`、`RpcServer`，与 Unity 的 `Game.Rpc.Runtime` 协议一致 |
-| `Transports/` | `TcpServerTransport` / `WebSocketServerTransport` / `KcpServerTransport`，实现 `ITransport` |
-| `Binder/` | `PlayerServiceBinder`，将 `IPlayerService` 实现注册到 `RpcServer` |
-| `Program.cs` | TCP + WebSocket accept 循环，每连接一个 `RpcServer` 并绑定 `IPlayerService` |
+| `Packages/com.bruce.rpc.contracts/` | `IPlayerService`、`LoginRequest`/`LoginReply`、`RpcAttributes`，服务端通过源码引用使用 |
+| `src/ULinkRPC.Runtime/` | `RpcEnvelopes`、`LengthPrefix`、`ITransport`、`RpcServer` 与传输实现（TCP/WS/KCP） |
+| `Server/Game.Rpc.Server/Binder/` | `PlayerServiceBinder`，将 `IPlayerService` 实现注册到 `RpcServer` |
+| `Server/Game.Rpc.Server/Program.cs` | TCP + WebSocket accept 循环，每连接一个 `RpcServer` 并绑定 `IPlayerService` |
 
 ## 扩展服务与认证
 
@@ -87,6 +88,18 @@ dotnet run --project Game.Rpc.Server -- --compress --compress-threshold 1024 --e
 
 - `ULinkRPC.Runtime`（netstandard2.1 + net8.0）
 - Contracts 为 Git 项目，不通过 NuGet 发布
+
+## 代码生成
+
+RPC 客户端与 Unity 测试 Binder 由工具生成：
+
+```bash
+dotnet run --project Tools/RpcCodeGen --
+```
+
+输出路径：
+- `Assets/Scripts/Rpc/Generated/`（Unity 客户端）
+- `Assets/Tests/Editor/Rpc/`（Unity EditMode 测试 Binder）
 
 ## 参考
 
