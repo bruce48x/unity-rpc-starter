@@ -33,7 +33,7 @@
     <Compile Include="..\..\Assets\Scripts\Rpc\Runtime\*.cs"
              Exclude="..\..\Assets\Scripts\Rpc\Runtime\RpcConnectionTester.cs;..\..\Assets\Scripts\Rpc\Runtime\RpcConnectionTestUiToolkit.cs" />
     <Compile Include="..\..\Assets\Scripts\Rpc\Transports\*.cs" />
-    <Compile Include="..\..\Server\Game.Rpc.Server\Runtime\RpcServer.cs" />
-    <Compile Include="..\..\Server\Game.Rpc.Server\Transports\*.cs" />
+    <Compile Include="Runtime\*.cs" />
+    <Compile Include="Transports\*.cs" />
   </ItemGroup>
 </Project>
