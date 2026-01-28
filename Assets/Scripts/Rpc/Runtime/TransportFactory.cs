@@ -18,6 +18,9 @@ namespace Game.Rpc.Runtime
 
         // ws
         public string WsUrl = "ws://127.0.0.1:20001/rpc";
+
+        // security
+        public TransportSecurityConfig Security = new TransportSecurityConfig();
     }
 
     public static class TransportFactory
@@ -26,7 +29,7 @@ namespace Game.Rpc.Runtime
         {
             pairedServerForLoopback = null;
 
-            return cfg.Kind switch
+            var transport = cfg.Kind switch
             {
                 TransportKind.Loopback => CreateLoopback(out pairedServerForLoopback),
                 TransportKind.Tcp => new TcpTransport(cfg.Host, cfg.Port),
@@ -34,6 +37,11 @@ namespace Game.Rpc.Runtime
                 TransportKind.Kcp => new KcpTransport(cfg.Host, cfg.Port),
                 _ => throw new ArgumentOutOfRangeException(nameof(cfg.Kind))
             };
+
+            if (cfg.Security is not null && cfg.Security.IsEnabled)
+                return new TransformingTransport(transport, cfg.Security);
+
+            return transport;
         }
 
         private static ITransport CreateLoopback(out ITransport pairedServer)

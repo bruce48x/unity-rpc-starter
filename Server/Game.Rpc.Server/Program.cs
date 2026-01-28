@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using Game.Rpc.Contracts;
@@ -14,14 +15,60 @@ var tcpPort = DefaultTcpPort;
 var wsPort = DefaultWsPort;
 var kcpPort = DefaultKcpPort;
 var wsHost = DefaultWsHost;
+var security = new TransportSecurityConfig();
 
-if (args.Length > 0 && int.TryParse(args[0], out var p))
+var positional = new List<string>();
+for (var i = 0; i < args.Length; i++)
+{
+    var arg = args[i];
+    if (!arg.StartsWith("--", StringComparison.Ordinal))
+    {
+        positional.Add(arg);
+        continue;
+    }
+
+    if (arg.StartsWith("--compress", StringComparison.OrdinalIgnoreCase))
+    {
+        security.EnableCompression = true;
+        var parts = arg.Split('=', 2, StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 2 && int.TryParse(parts[1], out var threshold))
+            security.CompressionThresholdBytes = threshold;
+        continue;
+    }
+
+    if (arg.StartsWith("--compress-threshold", StringComparison.OrdinalIgnoreCase))
+    {
+        security.EnableCompression = true;
+        if (TryReadNext(args, ref i, out var value) && int.TryParse(value, out var threshold))
+            security.CompressionThresholdBytes = threshold;
+        continue;
+    }
+
+    if (arg.StartsWith("--encrypt-key", StringComparison.OrdinalIgnoreCase))
+    {
+        security.EnableEncryption = true;
+        var parts = arg.Split('=', 2, StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 2)
+            security.EncryptionKeyBase64 = parts[1];
+        else if (TryReadNext(args, ref i, out var value))
+            security.EncryptionKeyBase64 = value;
+        continue;
+    }
+
+    if (arg.Equals("--encrypt", StringComparison.OrdinalIgnoreCase))
+    {
+        security.EnableEncryption = true;
+        continue;
+    }
+}
+
+if (positional.Count > 0 && int.TryParse(positional[0], out var p))
     tcpPort = p;
-if (args.Length > 1 && int.TryParse(args[1], out var wp))
+if (positional.Count > 1 && int.TryParse(positional[1], out var wp))
     wsPort = wp;
-if (args.Length > 2 && !string.IsNullOrWhiteSpace(args[2]))
-    wsHost = args[2];
-if (args.Length > 3 && int.TryParse(args[3], out var kp))
+if (positional.Count > 2 && !string.IsNullOrWhiteSpace(positional[2]))
+    wsHost = positional[2];
+if (positional.Count > 3 && int.TryParse(positional[3], out var kp))
     kcpPort = kp;
 
 using var cts = new CancellationTokenSource();
@@ -48,7 +95,7 @@ finally
     Console.WriteLine("Server stopped.");
 }
 
-static async Task RunTcpListenerAsync(int port, CancellationToken hostCt)
+async Task RunTcpListenerAsync(int port, CancellationToken hostCt)
 {
     var listener = new TcpListener(IPAddress.Any, port);
     listener.Start();
@@ -67,8 +114,8 @@ static async Task RunTcpListenerAsync(int port, CancellationToken hostCt)
                 break;
             }
 
-            _ = RunConnectionAsync(new TcpServerTransport(client), client.Client.RemoteEndPoint?.ToString() ?? "?",
-                hostCt);
+            var transport = new TcpServerTransport(client);
+            _ = RunConnectionAsync(WrapSecurity(transport), client.Client.RemoteEndPoint?.ToString() ?? "?", hostCt);
         }
     }
     finally
@@ -77,7 +124,7 @@ static async Task RunTcpListenerAsync(int port, CancellationToken hostCt)
     }
 }
 
-static async Task RunWebSocketListenerAsync(string host, int port, CancellationToken hostCt)
+async Task RunWebSocketListenerAsync(string host, int port, CancellationToken hostCt)
 {
     var listener = new HttpListener();
     listener.Prefixes.Add(BuildWsPrefix(host, port));
@@ -128,7 +175,7 @@ static async Task RunWebSocketListenerAsync(string host, int port, CancellationT
     }
 }
 
-static async Task RunKcpListenerAsync(int port, CancellationToken hostCt)
+async Task RunKcpListenerAsync(int port, CancellationToken hostCt)
 {
     while (!hostCt.IsCancellationRequested)
     {
@@ -161,11 +208,11 @@ static async Task RunKcpListenerAsync(int port, CancellationToken hostCt)
         Console.WriteLine($"[{remoteText}] KCP Connected (conv={conv}).");
 
         var transport = new KcpServerTransport(socket, remoteEndPoint!, conv, buffer.AsMemory(0, res.ReceivedBytes));
-        await RunConnectionAsync(transport, remoteText, hostCt).ConfigureAwait(false);
+        await RunConnectionAsync(WrapSecurity(transport), remoteText, hostCt).ConfigureAwait(false);
     }
 }
 
-static async Task HandleWebSocketClientAsync(HttpListenerContext ctx, CancellationToken hostCt)
+async Task HandleWebSocketClientAsync(HttpListenerContext ctx, CancellationToken hostCt)
 {
     var remote = ctx.Request.RemoteEndPoint?.ToString() ?? "?";
     Console.WriteLine($"[{remote}] WS Connected.");
@@ -173,7 +220,8 @@ static async Task HandleWebSocketClientAsync(HttpListenerContext ctx, Cancellati
     try
     {
         var wsContext = await ctx.AcceptWebSocketAsync(null).ConfigureAwait(false);
-        await RunConnectionAsync(new WebSocketServerTransport(wsContext.WebSocket), remote, hostCt)
+        var transport = new WebSocketServerTransport(wsContext.WebSocket);
+        await RunConnectionAsync(WrapSecurity(transport), remote, hostCt)
             .ConfigureAwait(false);
     }
     catch (Exception ex)
@@ -202,7 +250,7 @@ static string BuildWsPrefix(string host, int port)
     return $"http://{host}:{port}/rpc/";
 }
 
-static async Task RunConnectionAsync(ITransport transport, string remote, CancellationToken hostCt)
+async Task RunConnectionAsync(ITransport transport, string remote, CancellationToken hostCt)
 {
     RpcServer? server = null;
 
@@ -231,6 +279,28 @@ static async Task RunConnectionAsync(ITransport transport, string remote, Cancel
     }
 
     Console.WriteLine($"[{remote}] Disconnected.");
+}
+
+ITransport WrapSecurity(ITransport transport)
+{
+    if (!security.IsEnabled)
+        return transport;
+
+    return new TransformingTransport(transport, security);
+}
+
+static bool TryReadNext(string[] args, ref int index, out string value)
+{
+    var next = index + 1;
+    if (next >= args.Length)
+    {
+        value = string.Empty;
+        return false;
+    }
+
+    index = next;
+    value = args[next];
+    return true;
 }
 
 /// <summary>

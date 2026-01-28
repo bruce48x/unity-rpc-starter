@@ -32,6 +32,19 @@ dotnet run --project Game.Rpc.Server -- 20000 20001 127.0.0.1 20002
 dotnet run --project Game.Rpc.Server -- 20000 20001 0.0.0.0
 ```
 
+## 传输安全（压缩 / 加密）
+
+通过启动参数启用：
+
+```bash
+dotnet run --project Game.Rpc.Server -- --compress --compress-threshold 1024 --encrypt-key BASE64_KEY_32_BYTES
+```
+
+说明：
+- `--compress` 启用 GZip 压缩（可选 `--compress=2048` 或 `--compress-threshold 2048`）。
+- `--encrypt-key` 启用 AES-CBC + HMAC-SHA256 加密（Base64 密钥，解码后 16/24/32 字节）。
+- 客户端 `TransportConfig.Security` 需与服务端配置一致。
+
 ## Unity 客户端配置
 
 在 Unity 中配置 `TransportConfig` 使用 Tcp：
