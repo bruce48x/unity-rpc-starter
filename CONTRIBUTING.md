@@ -28,6 +28,13 @@ The project is intentionally split into multiple assemblies:
 
 Do **NOT** introduce circular dependencies between assemblies.
 
+### RPC contracts single source of truth
+- Do NOT create or duplicate RPC Contracts (interfaces/DTOs/attributes) under `/server`.
+- All contracts live ONLY in `Packages/com.bruce.rpc.contracts/`.
+- Server projects must include contracts by linking sources:
+  - `<Compile Include="..\..\Packages\com.bruce.rpc.contracts\**\*.cs" />`
+- If a server change requires a contract update, modify the shared contract files in the package, not by re-creating them in server.
+
 ---
 
 ## 2. Platform Constraints (Unity / iOS / IL2CPP)
@@ -41,6 +48,22 @@ Because this project targets **iOS + IL2CPP**, the following APIs are **forbidde
 - APIs that rely on JIT-only behavior
 
 If an API is commonly used on server-side .NET but not explicitly supported by Unity IL2CPP, assume it is **unsafe** unless proven otherwise.
+
+### Unity C# 9.0 Compatibility
+- Unity client code and shared contracts must compile with C# 9.0.
+- Do not use C# 10+ syntax such as file-scoped namespaces.
+
+Example:
+```csharp
+// ✅ OK (C# 9.0)
+namespace Game.Rpc.Contracts
+{
+    public interface IFoo { }
+}
+
+// ❌ NOT OK (C# 10+)
+// namespace Game.Rpc.Contracts;
+```
 
 ---
 
@@ -80,6 +103,7 @@ For testing and local validation, prefer **LoopbackTransport**.
 ### Test framework
 - All tests use **NUnit + Unity Test Framework**
 - Tests must live under `Assets/Tests/**`
+- These rules apply to any assembly ending with `.Tests` / `.Tests.Editor` / `.Tests.PlayMode`
 
 ### EditMode vs PlayMode
 - **EditMode tests** are the default for RPC/runtime logic.
@@ -97,6 +121,11 @@ For testing and local validation, prefer **LoopbackTransport**.
   ```json
   "includePlatforms": ["Editor"]
   ```
+- EditMode tests MUST live under `Assets/Tests/Editor/**`.
+- PlayMode tests MUST live under `Assets/Tests/PlayMode/**` (or an asmdef not restricted to Editor).
+- EditMode test assemblies SHOULD reference only:
+  - `Game.Rpc.Contracts`
+  - `Game.Rpc.Runtime`
 
 ---
 
@@ -192,5 +221,3 @@ When using AI tools (Claude Code, Cursor, Codex, etc.):
 - Always respect the rules in this document.
 - If a generated change violates Unity / IL2CPP constraints, it must be corrected before committing.
 - Prefer changes that preserve existing assembly boundaries and test coverage.
-
-See `.cursor/rules/` for enforced Cursor-specific rules.
