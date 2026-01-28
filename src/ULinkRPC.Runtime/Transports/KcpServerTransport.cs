@@ -40,7 +40,12 @@ public sealed class KcpServerTransport : ITransport, IKcpCallback, IRentable
         try
         {
             var mem = buffer.Memory.Slice(0, avalidLength);
+#if NET8_0_OR_GREATER
             _socket.SendTo(mem.Span, SocketFlags.None, _remote);
+#else
+            var tmp = mem.ToArray();
+            _socket.SendTo(tmp, 0, tmp.Length, SocketFlags.None, _remote);
+#endif
         }
         finally
         {
@@ -98,7 +103,13 @@ public sealed class KcpServerTransport : ITransport, IKcpCallback, IRentable
             if (TryDequeueFrame(out var queued))
                 return queued;
 
-            var res = await _socket.ReceiveFromAsync(buffer, SocketFlags.None, any, ct).ConfigureAwait(false);
+            SocketReceiveFromResult res;
+#if NET8_0_OR_GREATER
+            res = await _socket.ReceiveFromAsync(buffer, SocketFlags.None, any, ct).ConfigureAwait(false);
+#else
+            res = await _socket.ReceiveFromAsync(new ArraySegment<byte>(buffer), SocketFlags.None, any)
+                .ConfigureAwait(false);
+#endif
             if (!EndPointEquals(res.RemoteEndPoint, _remote))
                 continue;
 
