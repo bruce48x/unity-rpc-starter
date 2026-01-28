@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>netstandard2.1;net8.0</TargetFrameworks>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -30,10 +31,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\..\Assets\Scripts\Rpc\Runtime\*.cs"
-             Exclude="..\..\Assets\Scripts\Rpc\Runtime\RpcConnectionTester.cs;..\..\Assets\Scripts\Rpc\Runtime\RpcConnectionTestUiToolkit.cs" />
-    <Compile Include="..\..\Assets\Scripts\Rpc\Transports\*.cs" />
     <Compile Include="Runtime\*.cs" />
     <Compile Include="Transports\*.cs" />
+    <Compile Include="..\..\Assets\Scripts\Rpc\Runtime\RpcClient.cs" />
+    <Compile Include="..\..\Assets\Scripts\Rpc\Runtime\TransportFactory.cs" />
+    <Compile Include="..\..\Assets\Scripts\Rpc\Transports\LoopbackTransport.cs" />
+    <Compile Include="..\..\Assets\Scripts\Rpc\Transports\TcpTransport.cs" />
+    <Compile Include="..\..\Assets\Scripts\Rpc\Transports\WebSocketTransport.cs" />
+    <Compile Include="..\..\Assets\Scripts\Rpc\Transports\KcpTransport.cs" />
   </ItemGroup>
 </Project>
