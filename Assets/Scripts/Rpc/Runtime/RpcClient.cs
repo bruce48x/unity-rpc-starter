@@ -2,7 +2,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
-using MemoryPack;
 
 namespace Game.Rpc.Runtime
 {
@@ -11,13 +10,21 @@ namespace Game.Rpc.Runtime
         private readonly CancellationTokenSource _cts = new();
         private readonly ConcurrentDictionary<uint, TaskCompletionSource<RpcResponseEnvelope>> _pending = new();
         private readonly ITransport _transport;
+        private readonly IRpcSerializer _serializer;
         private uint _nextId = 1;
 
         private Task? _recvLoop;
 
         public RpcClient(ITransport transport)
         {
-            _transport = transport;
+            _transport = transport ?? throw new ArgumentNullException(nameof(transport));
+            _serializer = new MemoryPackRpcSerializer();
+        }
+
+        public RpcClient(ITransport transport, IRpcSerializer serializer)
+        {
+            _transport = transport ?? throw new ArgumentNullException(nameof(transport));
+            _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
         }
 
         public async ValueTask DisposeAsync()
@@ -53,7 +60,7 @@ namespace Game.Rpc.Runtime
 
             try
             {
-                var argBytes = arg is null ? Array.Empty<byte>() : MemoryPackSerializer.Serialize(arg);
+                var argBytes = arg is null ? Array.Empty<byte>() : _serializer.Serialize(arg);
 
                 var req = new RpcRequestEnvelope
                 {
@@ -63,7 +70,7 @@ namespace Game.Rpc.Runtime
                     Payload = argBytes
                 };
 
-                var reqBytes = MemoryPackSerializer.Serialize(req);
+                var reqBytes = _serializer.Serialize(req);
                 await _transport.SendFrameAsync(reqBytes, ct);
 
                 using var reg = ct.Register(() =>
@@ -79,7 +86,7 @@ namespace Game.Rpc.Runtime
                 if (typeof(TResult) == typeof(RpcVoid))
                     return (TResult)(object)RpcVoid.Instance;
 
-                return MemoryPackSerializer.Deserialize<TResult>(resp.Payload)!;
+                return _serializer.Deserialize<TResult>(resp.Payload.AsSpan())!;
             }
             finally
             {
@@ -100,7 +107,7 @@ namespace Game.Rpc.Runtime
                     if (frame.IsEmpty)
                         throw new InvalidOperationException("Transport closed.");
 
-                    var resp = MemoryPackSerializer.Deserialize<RpcResponseEnvelope>(frame.Span)!;
+                    var resp = _serializer.Deserialize<RpcResponseEnvelope>(frame.Span)!;
 
                     if (_pending.TryRemove(resp.RequestId, out var tcs))
                         tcs.TrySetResult(resp);

@@ -1,5 +1,3 @@
-using MemoryPack;
-
 namespace Game.Rpc.Runtime;
 
 public delegate ValueTask<RpcResponseEnvelope> RpcHandler(RpcRequestEnvelope req, CancellationToken ct);
@@ -8,14 +6,24 @@ public sealed class RpcServer
 {
     private readonly Dictionary<(int serviceId, int methodId), RpcHandler> _handlers = new();
     private readonly ITransport _transport;
+    private readonly IRpcSerializer _serializer;
 
     private CancellationTokenSource? _cts;
     private Task? _loop;
 
     public RpcServer(ITransport transport)
     {
-        _transport = transport;
+        _transport = transport ?? throw new ArgumentNullException(nameof(transport));
+        _serializer = new MemoryPackRpcSerializer();
     }
+
+    public RpcServer(ITransport transport, IRpcSerializer serializer)
+    {
+        _transport = transport ?? throw new ArgumentNullException(nameof(transport));
+        _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
+    }
+
+    public IRpcSerializer Serializer => _serializer;
 
     public void Register(int serviceId, int methodId, RpcHandler handler)
     {
@@ -70,7 +78,7 @@ public sealed class RpcServer
             if (frame.Length == 0)
                 break;
 
-            var req = MemoryPackSerializer.Deserialize<RpcRequestEnvelope>(frame.Span)!;
+            var req = _serializer.Deserialize<RpcRequestEnvelope>(frame.Span)!;
 
             RpcResponseEnvelope resp;
             if (_handlers.TryGetValue((req.ServiceId, req.MethodId), out var handler))
@@ -97,7 +105,7 @@ public sealed class RpcServer
                     ErrorMessage = $"No handler for {req.ServiceId}:{req.MethodId}"
                 };
 
-            var respBytes = MemoryPackSerializer.Serialize(resp);
+            var respBytes = _serializer.Serialize(resp);
             await _transport.SendFrameAsync(respBytes, ct).ConfigureAwait(false);
         }
     }

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using MemoryPack;
 
 namespace Game.Rpc.Runtime
 {
@@ -12,14 +11,24 @@ namespace Game.Rpc.Runtime
     {
         private readonly Dictionary<(int serviceId, int methodId), RpcHandler> _handlers = new();
         private readonly ITransport _transport;
+        private readonly IRpcSerializer _serializer;
 
         private CancellationTokenSource? _cts;
         private Task? _loop;
 
         public RpcServer(ITransport transport)
         {
-            _transport = transport;
+            _transport = transport ?? throw new ArgumentNullException(nameof(transport));
+            _serializer = new MemoryPackRpcSerializer();
         }
+
+        public RpcServer(ITransport transport, IRpcSerializer serializer)
+        {
+            _transport = transport ?? throw new ArgumentNullException(nameof(transport));
+            _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
+        }
+
+        public IRpcSerializer Serializer => _serializer;
 
         public void Register(int serviceId, int methodId, RpcHandler handler)
         {
@@ -41,7 +50,7 @@ namespace Game.Rpc.Runtime
             while (!ct.IsCancellationRequested)
             {
                 var frame = await _transport.ReceiveFrameAsync(ct).ConfigureAwait(false);
-                var req = MemoryPackSerializer.Deserialize<RpcRequestEnvelope>(frame.Span)!;
+                var req = _serializer.Deserialize<RpcRequestEnvelope>(frame.Span)!;
 
                 RpcResponseEnvelope resp;
                 if (_handlers.TryGetValue((req.ServiceId, req.MethodId), out var handler))
@@ -68,7 +77,7 @@ namespace Game.Rpc.Runtime
                         ErrorMessage = $"No handler for {req.ServiceId}:{req.MethodId}"
                     };
 
-                var respBytes = MemoryPackSerializer.Serialize(resp);
+                var respBytes = _serializer.Serialize(resp);
                 await _transport.SendFrameAsync(respBytes, ct).ConfigureAwait(false);
             }
         }

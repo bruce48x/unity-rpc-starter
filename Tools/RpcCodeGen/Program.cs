@@ -317,7 +317,7 @@ internal static class Program
 
         var binderTypeName = GetBinderTypeName(ifaceName);
         var binderSb = new StringBuilder();
-        binderSb.Append("using Game.Rpc.Contracts;\nusing Game.Rpc.Runtime;\nusing MemoryPack;\n\nnamespace Game.Rpc.Runtime.Generated\n{\n");
+        binderSb.Append("using System;\nusing Game.Rpc.Contracts;\nusing Game.Rpc.Runtime;\n\nnamespace Game.Rpc.Runtime.Generated\n{\n");
         binderSb.Append("    public static class ").Append(binderTypeName).Append("\n    {\n");
         binderSb.Append("        private const int ServiceId = ").Append(svc.ServiceId).Append(";\n\n");
         binderSb.Append("        public static void Bind(RpcServer server, ").Append(ifaceName).Append(" impl)\n        {\n");
@@ -329,14 +329,14 @@ internal static class Program
             var retType = m.IsVoid ? "RpcVoid" : m.RetTypeName!;
             binderSb.Append("            server.Register(ServiceId, ").Append(m.MethodId).Append(", async (req, ct) =>\n            {\n");
             if (hasArg)
-                binderSb.Append("                var arg = MemoryPackSerializer.Deserialize<").Append(argType).Append(">(req.Payload)!;\n");
+                binderSb.Append("                var arg = server.Serializer.Deserialize<").Append(argType).Append(">(req.Payload.AsSpan())!;\n");
             if (m.IsVoid)
             {
                 if (hasArg)
                     binderSb.Append("                await impl.").Append(m.Name).Append("(arg);\n");
                 else
                     binderSb.Append("                await impl.").Append(m.Name).Append("();\n");
-                binderSb.Append("                return new RpcResponseEnvelope { RequestId = req.RequestId, Status = RpcStatus.Ok, Payload = MemoryPackSerializer.Serialize(RpcVoid.Instance) };\n");
+                binderSb.Append("                return new RpcResponseEnvelope { RequestId = req.RequestId, Status = RpcStatus.Ok, Payload = server.Serializer.Serialize(RpcVoid.Instance) };\n");
             }
             else
             {
@@ -344,7 +344,7 @@ internal static class Program
                     binderSb.Append("                var resp = await impl.").Append(m.Name).Append("(arg);\n");
                 else
                     binderSb.Append("                var resp = await impl.").Append(m.Name).Append("();\n");
-                binderSb.Append("                return new RpcResponseEnvelope { RequestId = req.RequestId, Status = RpcStatus.Ok, Payload = MemoryPackSerializer.Serialize(resp) };\n");
+                binderSb.Append("                return new RpcResponseEnvelope { RequestId = req.RequestId, Status = RpcStatus.Ok, Payload = server.Serializer.Serialize(resp) };\n");
             }
             binderSb.Append("            });\n\n");
         }

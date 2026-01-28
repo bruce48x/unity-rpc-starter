@@ -1,5 +1,5 @@
+using System;
 using Game.Rpc.Contracts;
-using MemoryPack;
 
 namespace Game.Rpc.Runtime.Generated;
 
@@ -15,13 +15,13 @@ public static class PlayerServiceBinder
     {
         server.Register(ServiceId, 1, async (req, ct) =>
         {
-            var arg = MemoryPackSerializer.Deserialize<LoginRequest>(req.Payload)!;
+            var arg = server.Serializer.Deserialize<LoginRequest>(req.Payload.AsSpan())!;
             var resp = await impl.LoginAsync(arg);
             return new RpcResponseEnvelope
             {
                 RequestId = req.RequestId,
                 Status = RpcStatus.Ok,
-                Payload = MemoryPackSerializer.Serialize(resp)
+                Payload = server.Serializer.Serialize(resp)
             };
         });
 
@@ -32,7 +32,7 @@ public static class PlayerServiceBinder
             {
                 RequestId = req.RequestId,
                 Status = RpcStatus.Ok,
-                Payload = MemoryPackSerializer.Serialize(RpcVoid.Instance)
+                Payload = server.Serializer.Serialize(RpcVoid.Instance)
             };
         });
     }
