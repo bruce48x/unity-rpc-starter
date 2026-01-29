@@ -1,5 +1,6 @@
-using System;
+﻿using System;
 using Game.Rpc.Contracts;
+using Game.Rpc.Runtime;
 
 namespace Game.Rpc.Runtime.Generated
 {
@@ -13,21 +14,15 @@ namespace Game.Rpc.Runtime.Generated
             {
                 var arg = server.Serializer.Deserialize<LoginRequest>(req.Payload.AsSpan())!;
                 var resp = await impl.LoginAsync(arg);
-                return new RpcResponseEnvelope
-                {
-                    RequestId = req.RequestId, Status = RpcStatus.Ok, Payload = server.Serializer.Serialize(resp)
-                };
+                return new RpcResponseEnvelope { RequestId = req.RequestId, Status = RpcStatus.Ok, Payload = server.Serializer.Serialize(resp) };
             });
 
             server.Register(ServiceId, 2, async (req, ct) =>
             {
                 await impl.PingAsync();
-                return new RpcResponseEnvelope
-                {
-                    RequestId = req.RequestId, Status = RpcStatus.Ok,
-                    Payload = server.Serializer.Serialize(RpcVoid.Instance)
-                };
+                return new RpcResponseEnvelope { RequestId = req.RequestId, Status = RpcStatus.Ok, Payload = server.Serializer.Serialize(RpcVoid.Instance) };
             });
+
         }
     }
 }

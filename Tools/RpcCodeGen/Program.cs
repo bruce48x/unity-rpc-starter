@@ -6,8 +6,8 @@ namespace Game.Rpc.Tools;
 internal static class Program
 {
     private const string ContractsRelativePath = "Packages/com.bruce.rpc.contracts";
-    private const string OutputRelativePath = "Assets/Scripts/Rpc/Generated";
-    private const string BinderOutputRelativePath = "Assets/Tests/Editor/Rpc";
+    private const string OutputRelativePath = "Assets/Scripts/Rpc/RpcGenerated";
+    private const string DefaultOutputDirName = "RpcGenerated";
 
     private static int Main(string[] args)
     {
@@ -65,7 +65,11 @@ internal static class Program
         Console.WriteLine("Options:");
         Console.WriteLine("  --contracts <path>      Path to contract sources");
         Console.WriteLine("  --output <path>         Output directory for generated clients");
-        Console.WriteLine("  --binder-output <path>  Output directory for generated binders");
+        Console.WriteLine("  --binder-output <path>  Output directory for generated binders (must match --output)");
+        Console.WriteLine();
+        Console.WriteLine("Defaults:");
+        Console.WriteLine("  If run inside this repo, defaults to Packages/ + Assets/ paths.");
+        Console.WriteLine("  Otherwise, --contracts is required and outputs default to ./RpcGenerated.");
     }
 
     private static bool TryResolvePaths(
@@ -102,24 +106,49 @@ internal static class Program
             }
         }
 
-        var repoRoot = FindRepoRoot(Directory.GetCurrentDirectory());
-        if (repoRoot == null)
+        var cwd = Directory.GetCurrentDirectory();
+        var repoRoot = FindRepoRoot(cwd);
+        var isInRepo = repoRoot != null;
+
+        if (string.IsNullOrWhiteSpace(contractsPath))
         {
-            error = "Unable to locate repo root (missing Packages/com.bruce.rpc.contracts).";
-            return false;
+            if (!isInRepo)
+            {
+                error = "Contracts path not provided and repo root not found. Use --contracts <path>.";
+                return false;
+            }
+            contractsPath = Path.Combine(repoRoot!, ContractsRelativePath);
+        }
+        else
+        {
+            contractsPath = Path.GetFullPath(contractsPath);
         }
 
-        contractsPath = string.IsNullOrWhiteSpace(contractsPath)
-            ? Path.Combine(repoRoot, ContractsRelativePath)
-            : Path.GetFullPath(contractsPath);
+        if (string.IsNullOrWhiteSpace(outputPath))
+        {
+            outputPath = isInRepo
+                ? Path.Combine(repoRoot!, OutputRelativePath)
+                : Path.Combine(cwd, DefaultOutputDirName);
+        }
+        else
+        {
+            outputPath = Path.GetFullPath(outputPath);
+        }
 
-        outputPath = string.IsNullOrWhiteSpace(outputPath)
-            ? Path.Combine(repoRoot, OutputRelativePath)
-            : Path.GetFullPath(outputPath);
+        if (string.IsNullOrWhiteSpace(binderOutputPath))
+        {
+            binderOutputPath = outputPath;
+        }
+        else
+        {
+            binderOutputPath = Path.GetFullPath(binderOutputPath);
+        }
 
-        binderOutputPath = string.IsNullOrWhiteSpace(binderOutputPath)
-            ? Path.Combine(repoRoot, BinderOutputRelativePath)
-            : Path.GetFullPath(binderOutputPath);
+        if (!string.Equals(outputPath, binderOutputPath, StringComparison.OrdinalIgnoreCase))
+        {
+            error = "--binder-output must match --output (single output directory).";
+            return false;
+        }
 
         if (!Directory.Exists(contractsPath))
         {

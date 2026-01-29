@@ -10,8 +10,7 @@ This repository is a starter skeleton for a **strongly-typed RPC** framework for
 - `Packages/com.bruce.rpc.contracts`: Contracts (Git project; user-defined)
 - `Assets/Scripts/Rpc/Runtime`: Unity runtime + framing + RPC client core
 - `Assets/Scripts/Rpc/Transports`: TCP + WebSocket + KCP transports (client)
-- `Assets/Scripts/Rpc/Generated`: generated Unity client stubs (checked in)
-- `Assets/Tests/Editor/Rpc`: generated binders for Unity EditMode tests
+- `Assets/Scripts/Rpc/RpcGenerated`: generated Unity client stubs + test binders (checked in)
 - `src/ULinkRPC.Runtime`: NuGet runtime (netstandard2.1 + net8.0)
 
 ## NuGet installation
@@ -70,8 +69,7 @@ dotnet run --project Tools/RpcCodeGen --
 ```
 
 Generated files are written to:
-- `Assets/Scripts/Rpc/Generated/` (Unity client stubs)
-- `Assets/Tests/Editor/Rpc/` (Unity EditMode test binders)
+- `Assets/Scripts/Rpc/RpcGenerated/` (Unity client stubs + Unity EditMode test binders)
 They should be committed.
 
 ## Packing ULinkRPC.Runtime

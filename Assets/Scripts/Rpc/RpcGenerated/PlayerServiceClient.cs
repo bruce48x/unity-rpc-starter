@@ -1,6 +1,7 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 using Game.Rpc.Contracts;
+using Game.Rpc.Runtime;
 
 namespace Game.Rpc.Runtime.Generated
 {
@@ -9,10 +10,7 @@ namespace Game.Rpc.Runtime.Generated
         private const int ServiceId = 1;
         private readonly RpcClient _client;
 
-        public PlayerServiceClient(RpcClient client)
-        {
-            _client = client;
-        }
+        public PlayerServiceClient(RpcClient client) { _client = client; }
 
         public async ValueTask<LoginReply> LoginAsync(LoginRequest req)
         {
@@ -23,5 +21,6 @@ namespace Game.Rpc.Runtime.Generated
         {
             await _client.CallAsync<RpcVoid, RpcVoid>(ServiceId, 2, RpcVoid.Instance, CancellationToken.None);
         }
+
     }
 }

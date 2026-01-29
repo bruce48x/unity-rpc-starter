@@ -98,8 +98,8 @@ dotnet run --project Tools/RpcCodeGen --
 ```
 
 输出路径：
-- `Assets/Scripts/Rpc/Generated/`（Unity 客户端）
-- `Assets/Tests/Editor/Rpc/`（Unity EditMode 测试 Binder）
+- `Assets/Scripts/Rpc/RpcGenerated/`（Unity 客户端）
+- `Assets/Scripts/Rpc/RpcGenerated/`（Unity EditMode 测试 Binder）
 
 ## 参考
 

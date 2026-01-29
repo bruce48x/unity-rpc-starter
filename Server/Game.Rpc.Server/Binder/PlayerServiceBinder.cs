@@ -4,7 +4,7 @@ using Game.Rpc.Contracts;
 namespace Game.Rpc.Runtime.Generated;
 
 /// <summary>
-///     Server binder for IPlayerService. Mirrors Assets/Scripts/Rpc/Generated/PlayerServiceBinder
+///     Server binder for IPlayerService. Mirrors Assets/Scripts/Rpc/RpcGenerated/PlayerServiceBinder
 ///     for wire compatibility with the Unity RPC client.
 /// </summary>
 public static class PlayerServiceBinder
