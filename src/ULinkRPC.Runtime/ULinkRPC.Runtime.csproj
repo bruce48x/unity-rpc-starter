@@ -6,11 +6,12 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <PackageId>ULinkRPC.Runtime</PackageId>
-    <Version>0.1.0</Version>
+    <Version>0.1.3</Version>
     <Authors>ULinkRPC</Authors>
     <Description>ULinkRPC runtime with TCP/KCP/WebSocket transports, compression, and encryption.</Description>
     <PackageTags>rpc;unity;kcp;websocket;tcp</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -28,16 +29,11 @@
 
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="" />
+    <None Include="LICENSE" Pack="true" PackagePath="" />
   </ItemGroup>
 
   <ItemGroup>
     <Compile Include="Runtime\*.cs" />
     <Compile Include="Transports\*.cs" />
-    <Compile Include="..\..\Assets\Scripts\Rpc\Runtime\RpcClient.cs" />
-    <Compile Include="..\..\Assets\Scripts\Rpc\Runtime\TransportFactory.cs" />
-    <Compile Include="..\..\Assets\Scripts\Rpc\Transports\LoopbackTransport.cs" />
-    <Compile Include="..\..\Assets\Scripts\Rpc\Transports\TcpTransport.cs" />
-    <Compile Include="..\..\Assets\Scripts\Rpc\Transports\WebSocketTransport.cs" />
-    <Compile Include="..\..\Assets\Scripts\Rpc\Transports\KcpTransport.cs" />
   </ItemGroup>
 </Project>

@@ -1,120 +1,47 @@
-namespace Game.Rpc.Runtime;
-
-public delegate ValueTask<RpcResponseEnvelope> RpcHandler(RpcRequestEnvelope req, CancellationToken ct);
-
-public sealed class RpcServer
+namespace ULinkRPC.Runtime
 {
-    private readonly Dictionary<(int serviceId, int methodId), RpcHandler> _handlers = new();
-    private readonly ITransport _transport;
-    private readonly IRpcSerializer _serializer;
+    public delegate ValueTask<RpcResponseEnvelope> RpcHandler(RpcRequestEnvelope req, CancellationToken ct);
 
-    private CancellationTokenSource? _cts;
-    private Task? _loop;
-
-    public RpcServer(ITransport transport)
+    public sealed class RpcServer
     {
-        _transport = transport ?? throw new ArgumentNullException(nameof(transport));
-        _serializer = new MemoryPackRpcSerializer();
-    }
+        private readonly Dictionary<(int serviceId, int methodId), RpcHandler> _handlers = new();
+        private readonly ITransport _transport;
+        private readonly IRpcSerializer _serializer;
 
-    public RpcServer(ITransport transport, IRpcSerializer serializer)
-    {
-        _transport = transport ?? throw new ArgumentNullException(nameof(transport));
-        _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
-    }
+        private CancellationTokenSource? _cts;
+        private Task? _loop;
 
-    public IRpcSerializer Serializer => _serializer;
-
-    public void Register(int serviceId, int methodId, RpcHandler handler)
-    {
-        _handlers[(serviceId, methodId)] = handler;
-    }
-
-    public async ValueTask StartAsync(CancellationToken ct = default)
-    {
-        await _transport.ConnectAsync(ct);
-        _cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        _loop = Task.Run(LoopAsync);
-    }
-
-    public async ValueTask WaitForCompletionAsync()
-    {
-        if (_loop is null)
-            return;
-
-        try
+        public RpcServer(ITransport transport)
         {
-            await _loop.ConfigureAwait(false);
+            _transport = transport ?? throw new ArgumentNullException(nameof(transport));
+            _serializer = new MemoryPackRpcSerializer();
         }
-        catch (OperationCanceledException)
+
+        public RpcServer(ITransport transport, IRpcSerializer serializer)
         {
+            _transport = transport ?? throw new ArgumentNullException(nameof(transport));
+            _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
         }
-        catch (ObjectDisposedException)
+
+        public IRpcSerializer Serializer => _serializer;
+
+        public void Register(int serviceId, int methodId, RpcHandler handler)
         {
+            _handlers[(serviceId, methodId)] = handler;
         }
-    }
 
-    private async Task LoopAsync()
-    {
-        if (_cts is null) return;
-        var ct = _cts.Token;
-
-        while (!ct.IsCancellationRequested)
+        public async ValueTask StartAsync(CancellationToken ct = default)
         {
-            ReadOnlyMemory<byte> frame;
-            try
-            {
-                frame = await _transport.ReceiveFrameAsync(ct).ConfigureAwait(false);
-            }
-            catch (ObjectDisposedException)
-            {
-                break;
-            }
-            catch (InvalidOperationException) when (!_transport.IsConnected)
-            {
-                break;
-            }
-
-            if (frame.Length == 0)
-                break;
-
-            var req = _serializer.Deserialize<RpcRequestEnvelope>(frame.Span)!;
-
-            RpcResponseEnvelope resp;
-            if (_handlers.TryGetValue((req.ServiceId, req.MethodId), out var handler))
-                try
-                {
-                    resp = await handler(req, ct).ConfigureAwait(false);
-                }
-                catch (Exception ex)
-                {
-                    resp = new RpcResponseEnvelope
-                    {
-                        RequestId = req.RequestId,
-                        Status = RpcStatus.Exception,
-                        Payload = Array.Empty<byte>(),
-                        ErrorMessage = ex.ToString()
-                    };
-                }
-            else
-                resp = new RpcResponseEnvelope
-                {
-                    RequestId = req.RequestId,
-                    Status = RpcStatus.NotFound,
-                    Payload = Array.Empty<byte>(),
-                    ErrorMessage = $"No handler for {req.ServiceId}:{req.MethodId}"
-                };
-
-            var respBytes = _serializer.Serialize(resp);
-            await _transport.SendFrameAsync(respBytes, ct).ConfigureAwait(false);
+            await _transport.ConnectAsync(ct);
+            _cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            _loop = Task.Run(LoopAsync);
         }
-    }
 
-    public async ValueTask StopAsync()
-    {
-        if (_cts is null) return;
-        _cts.Cancel();
-        if (_loop is not null)
+        public async ValueTask WaitForCompletionAsync()
+        {
+            if (_loop is null)
+                return;
+
             try
             {
                 await _loop.ConfigureAwait(false);
@@ -125,8 +52,82 @@ public sealed class RpcServer
             catch (ObjectDisposedException)
             {
             }
+        }
 
-        _cts.Dispose();
-        _cts = null;
+        private async Task LoopAsync()
+        {
+            if (_cts is null) return;
+            var ct = _cts.Token;
+
+            while (!ct.IsCancellationRequested)
+            {
+                ReadOnlyMemory<byte> frame;
+                try
+                {
+                    frame = await _transport.ReceiveFrameAsync(ct).ConfigureAwait(false);
+                }
+                catch (ObjectDisposedException)
+                {
+                    break;
+                }
+                catch (InvalidOperationException) when (!_transport.IsConnected)
+                {
+                    break;
+                }
+
+                if (frame.Length == 0)
+                    break;
+
+                var req = _serializer.Deserialize<RpcRequestEnvelope>(frame.Span)!;
+
+                RpcResponseEnvelope resp;
+                if (_handlers.TryGetValue((req.ServiceId, req.MethodId), out var handler))
+                    try
+                    {
+                        resp = await handler(req, ct).ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        resp = new RpcResponseEnvelope
+                        {
+                            RequestId = req.RequestId,
+                            Status = RpcStatus.Exception,
+                            Payload = Array.Empty<byte>(),
+                            ErrorMessage = ex.ToString()
+                        };
+                    }
+                else
+                    resp = new RpcResponseEnvelope
+                    {
+                        RequestId = req.RequestId,
+                        Status = RpcStatus.NotFound,
+                        Payload = Array.Empty<byte>(),
+                        ErrorMessage = $"No handler for {req.ServiceId}:{req.MethodId}"
+                    };
+
+                var respBytes = _serializer.Serialize(resp);
+                await _transport.SendFrameAsync(respBytes, ct).ConfigureAwait(false);
+            }
+        }
+
+        public async ValueTask StopAsync()
+        {
+            if (_cts is null) return;
+            _cts.Cancel();
+            if (_loop is not null)
+                try
+                {
+                    await _loop.ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                }
+                catch (ObjectDisposedException)
+                {
+                }
+
+            _cts.Dispose();
+            _cts = null;
+        }
     }
 }

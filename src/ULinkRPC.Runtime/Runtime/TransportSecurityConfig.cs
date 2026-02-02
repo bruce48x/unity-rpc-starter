@@ -1,26 +1,27 @@
 using System;
 
-namespace Game.Rpc.Runtime;
-
-public sealed class TransportSecurityConfig
+namespace ULinkRPC.Runtime
 {
-    public bool EnableCompression;
-    public int CompressionThresholdBytes = 1024;
-    public bool EnableEncryption;
-
-    public byte[]? EncryptionKey;
-    public string? EncryptionKeyBase64;
-
-    public bool IsEnabled => EnableCompression || EnableEncryption;
-
-    public byte[]? ResolveKey()
+    public sealed class TransportSecurityConfig
     {
-        if (EncryptionKey is { Length: > 0 })
-            return EncryptionKey;
+        public bool EnableCompression;
+        public int CompressionThresholdBytes = 1024;
+        public bool EnableEncryption;
 
-        if (!string.IsNullOrWhiteSpace(EncryptionKeyBase64))
-            return Convert.FromBase64String(EncryptionKeyBase64);
+        public byte[]? EncryptionKey;
+        public string? EncryptionKeyBase64;
 
-        return null;
+        public bool IsEnabled => EnableCompression || EnableEncryption;
+
+        public byte[]? ResolveKey()
+        {
+            if (EncryptionKey is { Length: > 0 })
+                return EncryptionKey;
+
+            if (!string.IsNullOrWhiteSpace(EncryptionKeyBase64))
+                return Convert.FromBase64String(EncryptionKeyBase64);
+
+            return null;
+        }
     }
 }

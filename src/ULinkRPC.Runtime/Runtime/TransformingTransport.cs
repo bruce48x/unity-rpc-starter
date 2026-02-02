@@ -2,43 +2,44 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Game.Rpc.Runtime;
-
-public sealed class TransformingTransport : ITransport
+namespace ULinkRPC.Runtime
 {
-    private readonly ITransport _inner;
-    private readonly TransportFrameCodec _codec;
-
-    public TransformingTransport(ITransport inner, TransportSecurityConfig config)
+    public sealed class TransformingTransport : ITransport
     {
-        _inner = inner ?? throw new ArgumentNullException(nameof(inner));
-        _codec = new TransportFrameCodec(config ?? throw new ArgumentNullException(nameof(config)));
-    }
+        private readonly ITransport _inner;
+        private readonly TransportFrameCodec _codec;
 
-    public bool IsConnected => _inner.IsConnected;
+        public TransformingTransport(ITransport inner, TransportSecurityConfig config)
+        {
+            _inner = inner ?? throw new ArgumentNullException(nameof(inner));
+            _codec = new TransportFrameCodec(config ?? throw new ArgumentNullException(nameof(config)));
+        }
 
-    public ValueTask ConnectAsync(CancellationToken ct = default)
-    {
-        return _inner.ConnectAsync(ct);
-    }
+        public bool IsConnected => _inner.IsConnected;
 
-    public ValueTask SendFrameAsync(ReadOnlyMemory<byte> frame, CancellationToken ct = default)
-    {
-        var encoded = _codec.Encode(frame);
-        return _inner.SendFrameAsync(encoded, ct);
-    }
+        public ValueTask ConnectAsync(CancellationToken ct = default)
+        {
+            return _inner.ConnectAsync(ct);
+        }
 
-    public async ValueTask<ReadOnlyMemory<byte>> ReceiveFrameAsync(CancellationToken ct = default)
-    {
-        var raw = await _inner.ReceiveFrameAsync(ct).ConfigureAwait(false);
-        if (raw.IsEmpty)
-            return raw;
+        public ValueTask SendFrameAsync(ReadOnlyMemory<byte> frame, CancellationToken ct = default)
+        {
+            var encoded = _codec.Encode(frame);
+            return _inner.SendFrameAsync(encoded, ct);
+        }
 
-        return _codec.Decode(raw);
-    }
+        public async ValueTask<ReadOnlyMemory<byte>> ReceiveFrameAsync(CancellationToken ct = default)
+        {
+            var raw = await _inner.ReceiveFrameAsync(ct).ConfigureAwait(false);
+            if (raw.IsEmpty)
+                return raw;
 
-    public ValueTask DisposeAsync()
-    {
-        return _inner.DisposeAsync();
+            return _codec.Decode(raw);
+        }
+
+        public ValueTask DisposeAsync()
+        {
+            return _inner.DisposeAsync();
+        }
     }
 }
