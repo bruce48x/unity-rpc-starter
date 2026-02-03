@@ -1,6 +1,6 @@
 using System;
 using Game.Rpc.Contracts;
-using Game.Rpc.Runtime;
+using ULinkRPC.Runtime;
 using NUnit.Framework;
 using NUnitAssert = NUnit.Framework.Assert;
 

@@ -1,8 +1,8 @@
-﻿using System;
+using System;
 using Game.Rpc.Contracts;
-using Game.Rpc.Runtime;
+using ULinkRPC.Runtime;
 
-namespace Game.Rpc.Runtime.Generated
+namespace ULinkRPC.Runtime.Generated
 {
     public static class PlayerServiceBinder
     {

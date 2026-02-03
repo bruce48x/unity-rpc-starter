@@ -1,6 +1,6 @@
 using System;
 using System.Linq;
-using Game.Rpc.Runtime;
+using ULinkRPC.Runtime;
 using NUnit.Framework;
 
 namespace Tests.Editor.Rpc

@@ -3,7 +3,9 @@
   "rootNamespace": "",
   "references": [
     "Game.Rpc.Contracts",
-    "Game.Rpc.Runtime"
+    "ULinkRPC.Runtime",
+    "ULinkRPC.Runtime.Client",
+    "ULinkRPC.Runtime.Generated"
   ],
   "includePlatforms": [
     "Editor"
@@ -14,6 +16,7 @@
   "precompiledReferences": [
     "nunit.framework.dll",
     "MemoryPack.Core.dll",
+    "ULinkRPC.Runtime.dll",
     "System.Text.Json.dll",
     "System.Text.Encodings.Web.dll",
     "System.Runtime.CompilerServices.Unsafe.dll",
