@@ -12,6 +12,7 @@
 /[Uu]ser[Ss]ettings/
 *.log
 _nuget_tmp/
+_dotnet/
 
 # By default unity supports Blender asset imports, *.blend1 blender files do not need to be commited to version control.
 *.blend1
@@ -119,3 +120,7 @@ Tools/RpcCodeGen/obj/
 
 # NuGet artifacts
 /artifacts/
+# Local release helpers
+pack.cmd
+# Local dotnet cache
+.dotnet/
