@@ -2,7 +2,7 @@ using System.Collections;
 using System.Threading.Tasks;
 using Game.Rpc.Contracts;
 using ULinkRPC.Runtime;
-using ULinkRPC.Runtime.Generated;
+using Game.Rpc.Runtime.Generated;
 using UnityEngine;
 using UnityEngine.TestTools;
 using NUnitAssert = NUnit.Framework.Assert;

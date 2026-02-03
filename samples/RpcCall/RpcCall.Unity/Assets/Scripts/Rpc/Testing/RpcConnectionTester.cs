@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Game.Rpc.Contracts;
-using ULinkRPC.Runtime.Generated;
+using Game.Rpc.Runtime.Generated;
 using UnityEngine;
 
 namespace ULinkRPC.Runtime
