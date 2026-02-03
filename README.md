@@ -71,6 +71,10 @@ dotnet run --project src/ULinkRPC.CodeGen/ULinkRPC.CodeGen.csproj --
 ulinkrpc-codegen
 ```
 
+Helper scripts:
+- `scripts/gen.ps1`
+- `scripts/gen.sh`
+
 Generated files are written to:
 - `samples/RpcCall/RpcCall.Unity/Assets/Scripts/Rpc/RpcGenerated/` (Unity client stubs + Unity EditMode test binders)
 They should be committed.
