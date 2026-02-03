@@ -8,7 +8,7 @@ using System.Text;
 using ULinkRPC.Runtime;
 using Xunit;
 
-namespace Game.Rpc.Server.Tests;
+namespace RpcCall.Server.Tests;
 
 public class TransportModeTests
 {
@@ -402,3 +402,4 @@ public class TransportModeTests
         }
     }
 }
+

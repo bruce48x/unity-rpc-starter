@@ -1,6 +1,6 @@
-﻿using Game.Rpc.Contracts;
+using Game.Rpc.Contracts;
 
-namespace Game.Rpc.Server.Services;
+namespace RpcCall.Server.Services;
 
 public class PlayerService: IPlayerService
 {

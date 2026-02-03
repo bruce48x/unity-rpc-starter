@@ -16,13 +16,13 @@ WebSocket / KCP 传输已转移到单元测试覆盖。
 ```bash
 cd samples/RpcCall/RpcCall.Server
 dotnet build
-dotnet run --project Game.Rpc.Server
+dotnet run --project RpcCall.Server
 ```
 
 指定端口（默认 TCP 20000）：
 
 ```bash
-dotnet run --project Game.Rpc.Server -- 20000
+dotnet run --project RpcCall.Server -- 20000
 ```
 
 ## 传输安全（压缩 / 加密）
@@ -30,7 +30,7 @@ dotnet run --project Game.Rpc.Server -- 20000
 通过启动参数启用：
 
 ```bash
-dotnet run --project Game.Rpc.Server -- --compress --compress-threshold 1024 --encrypt-key BASE64_KEY_32_BYTES
+dotnet run --project RpcCall.Server -- --compress --compress-threshold 1024 --encrypt-key BASE64_KEY_32_BYTES
 ```
 
 说明：
@@ -46,7 +46,7 @@ dotnet run --project Game.Rpc.Server -- --compress --compress-threshold 1024 --e
 - `Host = "127.0.0.1"`（或本机 IP / 服务器 IP）
 - `Port = 20000`（与 `dotnet run` 所用端口一致）
 
-WebSocket / KCP 的联调示例已移到测试：`samples/RpcCall/RpcCall.Server/Game.Rpc.Server.Tests/TransportModeTests.cs`。
+WebSocket / KCP 的联调示例已移到测试：`samples/RpcCall/RpcCall.Server/RpcCall.Server.Tests/TransportModeTests.cs`。
 
 ## 项目结构
 
@@ -54,8 +54,8 @@ WebSocket / KCP 的联调示例已移到测试：`samples/RpcCall/RpcCall.Server
 |-------------|------|
 | `samples/RpcCall/RpcCall.Unity/Packages/com.bruce.rpc.contracts/` | `IPlayerService`、`LoginRequest`/`LoginReply`、`RpcAttributes`，服务端通过源码引用使用 |
 | `src/ULinkRPC.Runtime/` | `RpcEnvelopes`、`LengthPrefix`、`ITransport`、`RpcServer` 与传输实现（TCP/WS/KCP） |
-| `samples/RpcCall/RpcCall.Server/Game.Rpc.Server/Generated/` | 服务端 Binder 与 `AllServicesBinder` |
-| `samples/RpcCall/RpcCall.Server/Game.Rpc.Server/Program.cs` | TCP accept 循环，每连接一个 `RpcServer` 并绑定 `IPlayerService` |
+| `samples/RpcCall/RpcCall.Server/RpcCall.Server/Generated/` | 服务端 Binder 与 `AllServicesBinder` |
+| `samples/RpcCall/RpcCall.Server/RpcCall.Server/Program.cs` | TCP accept 循环，每连接一个 `RpcServer` 并绑定 `IPlayerService` |
 
 ## 扩展服务与认证
 
@@ -86,10 +86,11 @@ ulinkrpc-codegen
 输出路径：
 - `samples/RpcCall/RpcCall.Unity/Assets/Scripts/Rpc/RpcGenerated/`（Unity 客户端）
 - `samples/RpcCall/RpcCall.Unity/Assets/Scripts/Rpc/RpcGenerated/`（Unity EditMode 测试 Binder）
-- `samples/RpcCall/RpcCall.Server/Game.Rpc.Server/Generated/`（服务端 Binder 与 `AllServicesBinder`）
+- `samples/RpcCall/RpcCall.Server/RpcCall.Server/Generated/`（服务端 Binder 与 `AllServicesBinder`）
 
 ## 参考
 
 - [CONTRIBUTING.md](../../../CONTRIBUTING.md)：架构、传输、测试等约定
 - `samples/RpcCall/RpcCall.Unity/Assets/Scripts/Rpc/`：Unity 端 Runtime、Transports、Generated
 - `samples/RpcCall/RpcCall.Unity/Packages/com.bruce.rpc.contracts/`：Contracts
+

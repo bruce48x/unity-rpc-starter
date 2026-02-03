@@ -3,7 +3,7 @@ using System.Text;
 using ULinkRPC.Runtime;
 using Xunit;
 
-namespace Game.Rpc.Server.Tests;
+namespace RpcCall.Server.Tests;
 
 public class TransportSecurityTests
 {
@@ -73,3 +73,4 @@ public class TransportSecurityTests
         return Encoding.UTF8.GetBytes("hello-secure-transport");
     }
 }
+

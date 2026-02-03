@@ -5,8 +5,8 @@
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <RootNamespace>Game.Rpc.Server</RootNamespace>
-        <AssemblyName>Game.Rpc.Server</AssemblyName>
+        <RootNamespace>RpcCall.Server</RootNamespace>
+        <AssemblyName>RpcCall.Server</AssemblyName>
     </PropertyGroup>
 
     <ItemGroup>
@@ -24,3 +24,4 @@
     </ItemGroup>
 
 </Project>
+

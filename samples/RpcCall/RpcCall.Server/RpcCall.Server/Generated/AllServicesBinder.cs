@@ -1,7 +1,7 @@
-﻿using Game.Rpc.Contracts;
+using Game.Rpc.Contracts;
 using ULinkRPC.Runtime;
 
-namespace Game.Rpc.Server.Generated
+namespace RpcCall.Server.Generated
 {
     public static class AllServicesBinder
     {
@@ -11,3 +11,4 @@ namespace Game.Rpc.Server.Generated
         }
     }
 }
+

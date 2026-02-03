@@ -2,7 +2,7 @@ using System;
 using Game.Rpc.Contracts;
 using ULinkRPC.Runtime;
 
-namespace Game.Rpc.Server.Binder;
+namespace RpcCall.Server.Binder;
 
 /// <summary>
 ///     Server binder for IPlayerService. Mirrors Assets/Scripts/Rpc/RpcGenerated/PlayerServiceBinder

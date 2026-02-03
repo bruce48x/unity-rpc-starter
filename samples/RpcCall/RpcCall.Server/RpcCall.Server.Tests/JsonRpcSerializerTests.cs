@@ -2,7 +2,7 @@ using Game.Rpc.Contracts;
 using ULinkRPC.Runtime;
 using Xunit;
 
-namespace Game.Rpc.Server.Tests;
+namespace RpcCall.Server.Tests;
 
 public class JsonRpcSerializerTests
 {
@@ -40,3 +40,4 @@ public class JsonRpcSerializerTests
         Assert.Equal(input.Token, output.Token);
     }
 }
+

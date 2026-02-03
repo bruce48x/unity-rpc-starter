@@ -1,7 +1,7 @@
 using System.Net;
 using System.Net.Sockets;
-using Game.Rpc.Server.Generated;
-using Game.Rpc.Server.Services;
+using RpcCall.Server.Generated;
+using RpcCall.Server.Services;
 using ULinkRPC.Runtime;
 
 const int defaultTcpPort = 20000;
@@ -58,7 +58,7 @@ Console.CancelKeyPress += (_, e) =>
     cts.Cancel();
 };
 
-Console.WriteLine($"Game RPC Server TCP listening on 0.0.0.0:{tcpPort}. Press Ctrl+C to stop.");
+Console.WriteLine($"RpcCall Server TCP listening on 0.0.0.0:{tcpPort}. Press Ctrl+C to stop.");
 
 var tcpTask = RunTcpListenerAsync(tcpPort, cts.Token);
 
@@ -152,3 +152,4 @@ static bool TryReadNext(string[] args, ref int index, out string value)
     value = args[next];
     return true;
 }
+

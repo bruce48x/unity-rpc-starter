@@ -1,8 +1,8 @@
-﻿using System;
+using System;
 using Game.Rpc.Contracts;
 using ULinkRPC.Runtime;
 
-namespace Game.Rpc.Server.Generated
+namespace RpcCall.Server.Generated
 {
     public static class PlayerServiceBinder
     {
@@ -26,3 +26,4 @@ namespace Game.Rpc.Server.Generated
         }
     }
 }
+
