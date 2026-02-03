@@ -1,6 +1,6 @@
 using System.Linq;
 using System.Text;
-using Game.Rpc.Runtime;
+using ULinkRPC.Runtime;
 using Xunit;
 
 namespace Game.Rpc.Server.Tests;

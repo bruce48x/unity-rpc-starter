@@ -1,5 +1,6 @@
 using System;
 using Game.Rpc.Contracts;
+using ULinkRPC.Runtime;
 
 namespace Game.Rpc.Runtime.Generated;
 

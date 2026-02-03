@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using Game.Rpc.Contracts;
-using Game.Rpc.Runtime;
+using ULinkRPC.Runtime;
 using Game.Rpc.Runtime.Generated;
 
 const int DefaultTcpPort = 20000;

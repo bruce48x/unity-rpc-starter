@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using ULinkRPC.Runtime;
 
 namespace Game.Rpc.Contracts
 {
