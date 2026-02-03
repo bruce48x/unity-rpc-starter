@@ -5,9 +5,9 @@ namespace ULinkRPC.CodeGen;
 
 internal static class Program
 {
-    private const string ContractsRelativePath = "Packages/com.bruce.rpc.contracts";
-    private const string UnityOutputRelativePath = "Assets/Scripts/Rpc/RpcGenerated";
-    private const string ServerOutputRelativePath = "Server/Game.Rpc.Server/Generated";
+    private const string ContractsRelativePath = "samples/RpcCall/RpcCall.Unity/Packages/com.bruce.rpc.contracts";
+    private const string UnityOutputRelativePath = "samples/RpcCall/RpcCall.Unity/Assets/Scripts/Rpc/RpcGenerated";
+    private const string ServerOutputRelativePath = "samples/RpcCall/RpcCall.Server/Generated";
     private const string DefaultOutputDirName = "RpcGenerated";
     private const string DefaultRuntimeNamespace = "Game.Rpc.Runtime.Generated";
     private const string DefaultClientRuntimeUsing = "Game.Rpc.Runtime";
@@ -277,12 +277,12 @@ internal static class Program
     {
         if (!string.IsNullOrWhiteSpace(repoRoot))
         {
-            var assets = Path.Combine(repoRoot, "Assets");
-            var packages = Path.Combine(repoRoot, "Packages");
-            if (Directory.Exists(assets) && Directory.Exists(packages))
+            var unityAssets = Path.Combine(repoRoot, "samples", "RpcCall", "RpcCall.Unity", "Assets");
+            var unityPackages = Path.Combine(repoRoot, "samples", "RpcCall", "RpcCall.Unity", "Packages");
+            if (Directory.Exists(unityAssets) && Directory.Exists(unityPackages))
                 return OutputMode.Unity;
 
-            var serverDir = Path.Combine(repoRoot, "Server", "Game.Rpc.Server");
+            var serverDir = Path.Combine(repoRoot, "samples", "RpcCall", "RpcCall.Server", "Game.Rpc.Server");
             if (Directory.Exists(serverDir))
                 return OutputMode.Server;
         }
@@ -291,7 +291,7 @@ internal static class Program
         if (Directory.Exists(Path.Combine(cwd, "Assets")) && Directory.Exists(Path.Combine(cwd, "Packages")))
             return OutputMode.Unity;
 
-        if (Directory.Exists(Path.Combine(cwd, "Server", "Game.Rpc.Server")))
+        if (Directory.Exists(Path.Combine(cwd, "Game.Rpc.Server")))
             return OutputMode.Server;
 
         if (Directory.Exists(Path.Combine(contractsPath, "..", "Assets")))

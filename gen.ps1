@@ -1,1 +1,1 @@
-dotnet run --project Tools/RpcCodeGen --
+dotnet run --project src/ULinkRPC.CodeGen/ULinkRPC.CodeGen.csproj --

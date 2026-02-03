@@ -1,6 +1,6 @@
 # ULinkRPC Server
 
-与 [ULinkRPC](../README.md) 客户端配套的 **TCP 服务端**，实现与 Unity RPC 相同的协议与契约，便于本地联调与集成测试。
+与 [ULinkRPC](../../../README.md) 客户端配套的 **TCP 服务端**，实现与 Unity RPC 相同的协议与契约，便于本地联调与集成测试。
 WebSocket / KCP 传输已转移到单元测试覆盖。
 
 ## 协议与契约（与 Unity 一致）
@@ -14,7 +14,7 @@ WebSocket / KCP 传输已转移到单元测试覆盖。
 ## 构建与运行
 
 ```bash
-cd Server
+cd samples/RpcCall/RpcCall.Server
 dotnet build
 dotnet run --project Game.Rpc.Server
 ```
@@ -46,20 +46,20 @@ dotnet run --project Game.Rpc.Server -- --compress --compress-threshold 1024 --e
 - `Host = "127.0.0.1"`（或本机 IP / 服务器 IP）
 - `Port = 20000`（与 `dotnet run` 所用端口一致）
 
-WebSocket / KCP 的联调示例已移到测试：`Server/Game.Rpc.Server.Tests/TransportModeTests.cs`。
+WebSocket / KCP 的联调示例已移到测试：`samples/RpcCall/RpcCall.Server/Game.Rpc.Server.Tests/TransportModeTests.cs`。
 
 ## 项目结构
 
 | 目录 / 文件 | 说明 |
 |-------------|------|
-| `Packages/com.bruce.rpc.contracts/` | `IPlayerService`、`LoginRequest`/`LoginReply`、`RpcAttributes`，服务端通过源码引用使用 |
+| `samples/RpcCall/RpcCall.Unity/Packages/com.bruce.rpc.contracts/` | `IPlayerService`、`LoginRequest`/`LoginReply`、`RpcAttributes`，服务端通过源码引用使用 |
 | `src/ULinkRPC.Runtime/` | `RpcEnvelopes`、`LengthPrefix`、`ITransport`、`RpcServer` 与传输实现（TCP/WS/KCP） |
-| `Server/Game.Rpc.Server/Binder/` | `PlayerServiceBinder`，将 `IPlayerService` 实现注册到 `RpcServer` |
-| `Server/Game.Rpc.Server/Program.cs` | TCP accept 循环，每连接一个 `RpcServer` 并绑定 `IPlayerService` |
+| `samples/RpcCall/RpcCall.Server/Game.Rpc.Server/Generated/` | 服务端 Binder 与 `AllServicesBinder` |
+| `samples/RpcCall/RpcCall.Server/Game.Rpc.Server/Program.cs` | TCP accept 循环，每连接一个 `RpcServer` 并绑定 `IPlayerService` |
 
 ## 扩展服务与认证
 
-- **新增 RPC 方法**：在 `IPlayerService` 或新接口上添加方法，在 `PlayerServiceBinder`（或新 Binder）中注册；Unity 端需同步更新 Contracts 与 Generated 的 Client/Binder。
+- **新增 RPC 方法**：在 `IPlayerService` 或新接口上添加方法，通过代码生成更新 Server Binder；Unity 端需同步更新 Contracts 与 Generated 的 Client/Binder。
 - **认证**：在 `PlayerServiceImpl.LoginAsync` 中接入你的账号、密码校验与 Token 签发逻辑；可将 `Token` 写入 `LoginReply`，由客户端在后续请求中按你们的约定携带。
 
 ## 依赖
@@ -78,18 +78,18 @@ WebSocket / KCP 的联调示例已移到测试：`Server/Game.Rpc.Server.Tests/T
 RPC 客户端与 Unity 测试 Binder 由工具生成（本地源码运行或 dotnet tool 均可）：
 
 ```bash
-dotnet run --project Tools/RpcCodeGen --
+dotnet run --project src/ULinkRPC.CodeGen/ULinkRPC.CodeGen.csproj --
 # 或
 ulinkrpc-codegen
 ```
 
 输出路径：
-- `Assets/Scripts/Rpc/RpcGenerated/`（Unity 客户端）
-- `Assets/Scripts/Rpc/RpcGenerated/`（Unity EditMode 测试 Binder）
-- `Server/Game.Rpc.Server/Generated/`（服务端 Binder 与 `AllServicesBinder`）
+- `samples/RpcCall/RpcCall.Unity/Assets/Scripts/Rpc/RpcGenerated/`（Unity 客户端）
+- `samples/RpcCall/RpcCall.Unity/Assets/Scripts/Rpc/RpcGenerated/`（Unity EditMode 测试 Binder）
+- `samples/RpcCall/RpcCall.Server/Game.Rpc.Server/Generated/`（服务端 Binder 与 `AllServicesBinder`）
 
 ## 参考
 
-- [CONTRIBUTING.md](../CONTRIBUTING.md)：架构、传输、测试等约定
-- `Assets/Scripts/Rpc/`：Unity 端 Runtime、Transports、Generated
-- `Packages/com.bruce.rpc.contracts/`：Contracts
+- [CONTRIBUTING.md](../../../CONTRIBUTING.md)：架构、传输、测试等约定
+- `samples/RpcCall/RpcCall.Unity/Assets/Scripts/Rpc/`：Unity 端 Runtime、Transports、Generated
+- `samples/RpcCall/RpcCall.Unity/Packages/com.bruce.rpc.contracts/`：Contracts

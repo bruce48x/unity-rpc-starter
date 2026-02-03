@@ -31,7 +31,7 @@ ulinkrpc-codegen [options]
 
 ## Default Behavior
 
-- Unity project: generates to `Assets/Scripts/Rpc/RpcGenerated`.
-- Server project: generates to `Server/Game.Rpc.Server/Generated`.
+- Unity project: generates to `samples/RpcCall/RpcCall.Unity/Assets/Scripts/Rpc/RpcGenerated`.
+- Server project: generates to `samples/RpcCall/RpcCall.Server/Generated`.
 
 Paths can be overridden via options.

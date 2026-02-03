@@ -14,8 +14,8 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <Compile Include="..\..\Packages\com.bruce.rpc.contracts\**\*.cs"/>
-        <ProjectReference Include="..\..\src\ULinkRPC.Runtime\ULinkRPC.Runtime.csproj" />
+        <Compile Include="..\..\RpcCall.Unity\Packages\com.bruce.rpc.contracts\**\*.cs"/>
+        <ProjectReference Include="..\..\..\..\src\ULinkRPC.Runtime\ULinkRPC.Runtime.csproj" />
     </ItemGroup>
 
     <ItemGroup>
