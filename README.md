@@ -7,10 +7,11 @@ This repository is a starter skeleton for a **strongly-typed RPC** framework for
 - Pluggable DTO serialization (MemoryPack by default)
 
 ## What is included
-- `samples/RpcCall/RpcCall.Unity/Packages/com.bruce.rpc.contracts`: Contracts (Git project; user-defined)
-- `samples/RpcCall/RpcCall.Unity/Assets/Scripts/Rpc/Runtime`: Unity runtime + framing + RPC client core
-- `samples/RpcCall/RpcCall.Unity/Assets/Scripts/Rpc/Transports`: TCP + WebSocket + KCP transports (client)
-- `samples/RpcCall/RpcCall.Unity/Assets/Scripts/Rpc/RpcGenerated`: generated Unity client stubs + test binders (checked in)
+- `samples/RpcCallFull/RpcCall.Unity/Packages/com.bruce.rpc.contracts`: Contracts (Git project; user-defined)
+- `samples/RpcCallFull/RpcCall.Unity/Assets/Scripts/Rpc/Runtime`: Unity runtime + framing + RPC client core
+- `samples/RpcCallFull/RpcCall.Unity/Assets/Scripts/Rpc/Transports`: TCP + WebSocket + KCP transports (client)
+- `samples/RpcCallFull/RpcCall.Unity/Assets/Scripts/Rpc/RpcGenerated`: generated Unity client stubs + test binders (checked in)
+- `samples/RpcCallLite`: minimal TCP-only tutorial sample (no compression/encryption)
 - `src/ULinkRPC.Runtime`: NuGet runtime (netstandard2.1 + net8.0)
 - `src/ULinkRPC.CodeGen`: code generator (dotnet tool)
 
@@ -76,7 +77,7 @@ Helper scripts:
 - `scripts/gen.sh`
 
 Generated files are written to:
-- `samples/RpcCall/RpcCall.Unity/Assets/Scripts/Rpc/RpcGenerated/` (Unity client stubs + Unity EditMode test binders)
+- `samples/RpcCallFull/RpcCall.Unity/Assets/Scripts/Rpc/RpcGenerated/` (Unity client stubs + Unity EditMode test binders)
 They should be committed.
 
 ## Packing ULinkRPC.Runtime
@@ -85,7 +86,7 @@ dotnet pack src/ULinkRPC.Runtime/ULinkRPC.Runtime.csproj -c Release
 ```
 
 ## Tests
-1. Open `samples/RpcCall/RpcCall.Unity` in Unity 2022 LTS.
+1. Open `samples/RpcCallFull/RpcCall.Unity` in Unity 2022 LTS.
 2. Ensure packages resolve (MemoryPack should be present).
 3. open `Window` -> `General` -> `Test Runner` ， click `EditMode`, click `Run All`
 
