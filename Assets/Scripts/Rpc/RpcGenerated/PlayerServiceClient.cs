@@ -1,9 +1,9 @@
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 using Game.Rpc.Contracts;
-using ULinkRPC.Runtime;
+using Game.Rpc.Runtime;
 
-namespace ULinkRPC.Runtime.Generated
+namespace Game.Rpc.Runtime.Generated
 {
     public sealed class PlayerServiceClient : IPlayerService
     {
