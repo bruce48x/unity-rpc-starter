@@ -1,6 +1,7 @@
 # ULinkRPC Server
 
-与 [ULinkRPC](../README.md) 客户端配套的 **TCP / WebSocket / KCP 服务端**，实现与 Unity RPC 相同的协议与契约，便于本地联调与集成测试。
+与 [ULinkRPC](../README.md) 客户端配套的 **TCP 服务端**，实现与 Unity RPC 相同的协议与契约，便于本地联调与集成测试。
+WebSocket / KCP 传输已转移到单元测试覆盖。
 
 ## 协议与契约（与 Unity 一致）
 
@@ -18,18 +19,10 @@ dotnet build
 dotnet run --project Game.Rpc.Server
 ```
 
-指定端口（默认 TCP 20000、WS 20001、KCP 20002）：
-
-参数顺序：`tcpPort wsPort wsHost kcpPort`
+指定端口（默认 TCP 20000）：
 
 ```bash
-dotnet run --project Game.Rpc.Server -- 20000 20001 127.0.0.1 20002
-```
-
-指定 WS 绑定地址（默认 127.0.0.1）：
-
-```bash
-dotnet run --project Game.Rpc.Server -- 20000 20001 0.0.0.0
+dotnet run --project Game.Rpc.Server -- 20000
 ```
 
 ## 传输安全（压缩 / 加密）
@@ -53,16 +46,7 @@ dotnet run --project Game.Rpc.Server -- --compress --compress-threshold 1024 --e
 - `Host = "127.0.0.1"`（或本机 IP / 服务器 IP）
 - `Port = 20000`（与 `dotnet run` 所用端口一致）
 
-使用 WebSocket：
-
-- `Kind = TransportKind.WebSocket`
-- `WsUrl = "ws://127.0.0.1:20001/rpc"`
-
-使用 KCP：
-
-- `Kind = TransportKind.Kcp`
-- `Host = "127.0.0.1"`（或本机 IP / 服务器 IP）
-- `Port = 20002`
+WebSocket / KCP 的联调示例已移到测试：`Server/Game.Rpc.Server.Tests/TransportModeTests.cs`。
 
 ## 项目结构
 
@@ -71,7 +55,7 @@ dotnet run --project Game.Rpc.Server -- --compress --compress-threshold 1024 --e
 | `Packages/com.bruce.rpc.contracts/` | `IPlayerService`、`LoginRequest`/`LoginReply`、`RpcAttributes`，服务端通过源码引用使用 |
 | `src/ULinkRPC.Runtime/` | `RpcEnvelopes`、`LengthPrefix`、`ITransport`、`RpcServer` 与传输实现（TCP/WS/KCP） |
 | `Server/Game.Rpc.Server/Binder/` | `PlayerServiceBinder`，将 `IPlayerService` 实现注册到 `RpcServer` |
-| `Server/Game.Rpc.Server/Program.cs` | TCP + WebSocket accept 循环，每连接一个 `RpcServer` 并绑定 `IPlayerService` |
+| `Server/Game.Rpc.Server/Program.cs` | TCP accept 循环，每连接一个 `RpcServer` 并绑定 `IPlayerService` |
 
 ## 扩展服务与认证
 
@@ -91,15 +75,18 @@ dotnet run --project Game.Rpc.Server -- --compress --compress-threshold 1024 --e
 
 ## 代码生成
 
-RPC 客户端与 Unity 测试 Binder 由工具生成：
+RPC 客户端与 Unity 测试 Binder 由工具生成（本地源码运行或 dotnet tool 均可）：
 
 ```bash
 dotnet run --project Tools/RpcCodeGen --
+# 或
+ulinkrpc-codegen
 ```
 
 输出路径：
 - `Assets/Scripts/Rpc/RpcGenerated/`（Unity 客户端）
 - `Assets/Scripts/Rpc/RpcGenerated/`（Unity EditMode 测试 Binder）
+- `Server/Game.Rpc.Server/Generated/`（服务端 Binder 与 `AllServicesBinder`）
 
 ## 参考
 

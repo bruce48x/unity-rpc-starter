@@ -5,8 +5,19 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RootNamespace>Game.Rpc.Tools</RootNamespace>
-    <AssemblyName>RpcCodeGen</AssemblyName>
+    <RootNamespace>ULinkRPC.CodeGen</RootNamespace>
+    <AssemblyName>ULinkRPC.CodeGen</AssemblyName>
+    <PackageId>ULinkRPC.CodeGen</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>ULinkRPC</Authors>
+    <Description>ULinkRPC RPC code generator for Unity and server projects.</Description>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>ulinkrpc-codegen</ToolCommandName>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
 
 </Project>
