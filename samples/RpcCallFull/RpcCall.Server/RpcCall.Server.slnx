@@ -1,0 +1,9 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="RpcCall.Server.Tests/RpcCall.Server.Tests.csproj" />
+  <Project Path="RpcCall.Server/RpcCall.Server.csproj" />
+</Solution>
