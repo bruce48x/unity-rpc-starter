@@ -93,6 +93,9 @@ namespace ULinkRPC.Runtime
                 await _proxy.PingAsync();
                 Debug.Log("Ping ok.");
 
+                var greeting = await _proxy.ComposeGreetingAsync(Account, 10, true);
+                Debug.Log($"Multi-arg rpc ok: {greeting}");
+
                 if (_disconnectedDuringConnect)
                 {
                     _disconnectedDuringConnect = false;

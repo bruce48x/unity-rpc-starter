@@ -22,5 +22,10 @@ namespace Game.Rpc.Runtime.Generated
             await _client.CallAsync<RpcVoid, RpcVoid>(ServiceId, 2, RpcVoid.Instance, CancellationToken.None);
         }
 
+        public async ValueTask<string> ComposeGreetingAsync(string name, int level, bool vip)
+        {
+            return await _client.CallAsync<(string, int, bool), string>(ServiceId, 3, (name, level, vip), CancellationToken.None);
+        }
+
     }
 }

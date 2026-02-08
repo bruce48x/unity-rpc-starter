@@ -1,4 +1,4 @@
-using Game.Rpc.Contracts;
+﻿using Game.Rpc.Contracts;
 using ULinkRPC.Runtime;
 
 namespace RpcCall.Server.Generated
@@ -11,4 +11,3 @@ namespace RpcCall.Server.Generated
         }
     }
 }
-

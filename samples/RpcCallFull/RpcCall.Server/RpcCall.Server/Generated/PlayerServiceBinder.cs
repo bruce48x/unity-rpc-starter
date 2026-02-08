@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Game.Rpc.Contracts;
 using ULinkRPC.Runtime;
 
@@ -12,8 +12,8 @@ namespace RpcCall.Server.Generated
         {
             server.Register(ServiceId, 1, async (req, ct) =>
             {
-                var arg = server.Serializer.Deserialize<LoginRequest>(req.Payload.AsSpan())!;
-                var resp = await impl.LoginAsync(arg);
+                var arg1 = server.Serializer.Deserialize<LoginRequest>(req.Payload.AsSpan())!;
+                var resp = await impl.LoginAsync(arg1);
                 return new RpcResponseEnvelope { RequestId = req.RequestId, Status = RpcStatus.Ok, Payload = server.Serializer.Serialize(resp) };
             });
 
@@ -23,7 +23,13 @@ namespace RpcCall.Server.Generated
                 return new RpcResponseEnvelope { RequestId = req.RequestId, Status = RpcStatus.Ok, Payload = server.Serializer.Serialize(RpcVoid.Instance) };
             });
 
+            server.Register(ServiceId, 3, async (req, ct) =>
+            {
+                var (arg1, arg2, arg3) = server.Serializer.Deserialize<(string, int, bool)>(req.Payload.AsSpan())!;
+                var resp = await impl.ComposeGreetingAsync(arg1, arg2, arg3);
+                return new RpcResponseEnvelope { RequestId = req.RequestId, Status = RpcStatus.Ok, Payload = server.Serializer.Serialize(resp) };
+            });
+
         }
     }
 }
-

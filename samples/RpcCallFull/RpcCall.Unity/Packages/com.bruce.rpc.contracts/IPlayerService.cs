@@ -11,5 +11,8 @@ namespace Game.Rpc.Contracts
 
         [RpcMethod(2)]
         ValueTask PingAsync();
+
+        [RpcMethod(3)]
+        ValueTask<string> ComposeGreetingAsync(string name, int level, bool vip);
     }
 }

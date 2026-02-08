@@ -19,4 +19,10 @@ public class PlayerService: IPlayerService
     {
         return default;
     }
+
+    public ValueTask<string> ComposeGreetingAsync(string name, int level, bool vip)
+    {
+        var tag = vip ? "VIP" : "NORMAL";
+        return new ValueTask<string>($"Hello {name}, Lv.{level} [{tag}]");
+    }
 }

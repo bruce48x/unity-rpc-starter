@@ -44,6 +44,9 @@ namespace Tests.Editor.Rpc
             await proxy.PingAsync();
             Debug.Log("Ping ok.");
 
+            var greeting = await proxy.ComposeGreetingAsync("Alice", 7, true);
+            NUnitAssert.AreEqual("Hello Alice, Lv.7 [VIP]", greeting);
+
             // 可选：清理（避免测试进程残留后台任务）
             await server.StopAsync();
             await client.DisposeAsync();
@@ -59,6 +62,12 @@ namespace Tests.Editor.Rpc
             public ValueTask PingAsync()
             {
                 return default;
+            }
+
+            public ValueTask<string> ComposeGreetingAsync(string name, int level, bool vip)
+            {
+                var tag = vip ? "VIP" : "NORMAL";
+                return new ValueTask<string>($"Hello {name}, Lv.{level} [{tag}]");
             }
         }
     }

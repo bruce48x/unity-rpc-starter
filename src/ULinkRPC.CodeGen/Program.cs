@@ -10,7 +10,7 @@ internal static class Program
     private const string ServerOutputRelativePath = "samples/RpcCall/RpcCall.Server/Generated";
     private const string DefaultOutputDirName = "RpcGenerated";
     private const string DefaultRuntimeNamespace = "Game.Rpc.Runtime.Generated";
-    private const string DefaultClientRuntimeUsing = "Game.Rpc.Runtime";
+    private const string DefaultClientRuntimeUsing = "ULinkRPC.Runtime";
     private const string DefaultServerRuntimeUsing = "ULinkRPC.Runtime";
 
     private static int Main(string[] args)
@@ -737,7 +737,9 @@ internal static class Program
         var clientBody = new StringBuilder();
         clientBody.Append("using System.Threading;\nusing System.Threading.Tasks;\n")
             .Append(FormatUsingBlock(contractUsings))
-            .Append("using Game.Rpc.Runtime;\n\nnamespace ")
+            .Append("using ")
+            .Append(runtimeUsing)
+            .Append(";\n\nnamespace ")
             .Append(runtimeNamespace)
             .Append("\n{\n");
         clientBody.Append("    public sealed class ").Append(clientTypeName).Append(" : ").Append(ifaceName).Append("\n    {\n");
