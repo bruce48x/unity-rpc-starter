@@ -393,10 +393,10 @@ internal static class Program
         {
             var methodId = int.Parse(match.Groups[1].Value);
             var signature = match.Groups[2].Value.Trim();
-            if (!TryParseMethodSignature(signature, out var name, out var argType, out var retType, out var isVoid))
+            if (!TryParseMethodSignature(signature, out var name, out var parameters, out var retType, out var isVoid))
                 continue;
 
-            methods.Add(new RpcMethodInfo(name, methodId, argType, retType, isVoid));
+            methods.Add(new RpcMethodInfo(name, methodId, parameters, retType, isVoid));
         }
 
         return methods;
@@ -405,22 +405,30 @@ internal static class Program
     private static bool TryParseMethodSignature(
         string signature,
         out string name,
-        out string? argType,
+        out List<RpcParameterInfo> parameters,
         out string? retType,
         out bool isVoid)
     {
         name = string.Empty;
-        argType = null;
+        parameters = new List<RpcParameterInfo>();
         retType = null;
         isVoid = false;
 
-        var match = Regex.Match(signature, @"^\s*(?<ret>[^\s]+)\s+(?<name>\w+)\s*\((?<params>[^\)]*)\)\s*$");
-        if (!match.Success)
+        var openParen = signature.IndexOf('(');
+        var closeParen = signature.LastIndexOf(')');
+        if (openParen <= 0 || closeParen <= openParen)
             return false;
 
-        var ret = match.Groups["ret"].Value.Trim();
-        name = match.Groups["name"].Value.Trim();
-        var paramList = match.Groups["params"].Value.Trim();
+        var header = signature.Substring(0, openParen).Trim();
+        var paramList = signature.Substring(openParen + 1, closeParen - openParen - 1).Trim();
+        var splitAt = FindLastTopLevelWhitespace(header);
+        if (splitAt <= 0 || splitAt >= header.Length - 1)
+            return false;
+
+        var ret = header.Substring(0, splitAt).Trim();
+        name = header.Substring(splitAt).Trim();
+        if (string.IsNullOrWhiteSpace(name))
+            return false;
 
         if (string.Equals(ret, "ValueTask", StringComparison.Ordinal) ||
             string.Equals(ret, "System.Threading.Tasks.ValueTask", StringComparison.Ordinal))
@@ -436,24 +444,285 @@ internal static class Program
                 retType = ret;
         }
 
-        if (!string.IsNullOrWhiteSpace(paramList))
+        parameters = ParseParameters(paramList);
+
+        return true;
+    }
+
+    private static List<RpcParameterInfo> ParseParameters(string paramList)
+    {
+        var result = new List<RpcParameterInfo>();
+        if (string.IsNullOrWhiteSpace(paramList))
+            return result;
+
+        var parts = SplitTopLevel(paramList, ',');
+        for (var i = 0; i < parts.Count; i++)
         {
-            var param = paramList.Split(',')[0];
-            var paramCore = param.Split('=')[0].Trim();
-            var tokens = paramCore.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-            if (tokens.Length >= 2)
+            var parsed = TryParseParameter(parts[i], i + 1);
+            if (parsed != null)
+                result.Add(parsed);
+        }
+
+        return result;
+    }
+
+    private static RpcParameterInfo? TryParseParameter(string input, int index)
+    {
+        var param = input.Trim();
+        if (string.IsNullOrWhiteSpace(param))
+            return null;
+
+        param = TrimLeadingParameterAttributes(param);
+        var eqIndex = FindFirstTopLevel(param, '=');
+        if (eqIndex >= 0)
+            param = param.Substring(0, eqIndex).Trim();
+
+        if (string.IsNullOrWhiteSpace(param))
+            return null;
+
+        var splitAt = FindLastTopLevelWhitespace(param);
+        if (splitAt <= 0 || splitAt >= param.Length - 1)
+            return new RpcParameterInfo(TrimParameterTypeModifiers(param), $"arg{index}");
+
+        var typeName = TrimParameterTypeModifiers(param.Substring(0, splitAt).Trim());
+        var name = param.Substring(splitAt).Trim();
+        if (string.IsNullOrWhiteSpace(typeName))
+            return null;
+
+        if (string.IsNullOrWhiteSpace(name))
+            name = $"arg{index}";
+
+        return new RpcParameterInfo(typeName, name);
+    }
+
+    private static string TrimLeadingParameterAttributes(string input)
+    {
+        var text = input.Trim();
+        while (text.StartsWith("[", StringComparison.Ordinal))
+        {
+            var depth = 0;
+            var consumed = 0;
+            for (var i = 0; i < text.Length; i++)
             {
-                var typeToken = tokens[0];
-                if (typeToken is "in" or "ref" or "out")
+                if (text[i] == '[')
+                    depth++;
+                else if (text[i] == ']')
                 {
-                    if (tokens.Length >= 3)
-                        typeToken = tokens[1];
+                    depth--;
+                    if (depth == 0)
+                    {
+                        consumed = i + 1;
+                        break;
+                    }
                 }
-                argType = typeToken;
+            }
+
+            if (consumed == 0)
+                break;
+
+            text = text.Substring(consumed).TrimStart();
+        }
+
+        return text;
+    }
+
+    private static string TrimParameterTypeModifiers(string typePart)
+    {
+        var text = typePart.Trim();
+        while (true)
+        {
+            if (text.StartsWith("in ", StringComparison.Ordinal))
+            {
+                text = text.Substring(3).TrimStart();
+                continue;
+            }
+
+            if (text.StartsWith("out ", StringComparison.Ordinal))
+            {
+                text = text.Substring(4).TrimStart();
+                continue;
+            }
+
+            if (text.StartsWith("ref ", StringComparison.Ordinal))
+            {
+                text = text.Substring(4).TrimStart();
+                continue;
+            }
+
+            if (text.StartsWith("params ", StringComparison.Ordinal))
+            {
+                text = text.Substring(7).TrimStart();
+                continue;
+            }
+
+            if (text.StartsWith("this ", StringComparison.Ordinal))
+            {
+                text = text.Substring(5).TrimStart();
+                continue;
+            }
+
+            if (text.StartsWith("scoped ", StringComparison.Ordinal))
+            {
+                text = text.Substring(7).TrimStart();
+                continue;
+            }
+
+            if (text.StartsWith("readonly ", StringComparison.Ordinal))
+            {
+                text = text.Substring(9).TrimStart();
+                continue;
+            }
+
+            return text;
+        }
+    }
+
+    private static int FindFirstTopLevel(string text, char target)
+    {
+        var angleDepth = 0;
+        var parenDepth = 0;
+        var bracketDepth = 0;
+        var braceDepth = 0;
+        for (var i = 0; i < text.Length; i++)
+        {
+            var ch = text[i];
+            switch (ch)
+            {
+                case '<':
+                    angleDepth++;
+                    break;
+                case '>':
+                    if (angleDepth > 0) angleDepth--;
+                    break;
+                case '(':
+                    parenDepth++;
+                    break;
+                case ')':
+                    if (parenDepth > 0) parenDepth--;
+                    break;
+                case '[':
+                    bracketDepth++;
+                    break;
+                case ']':
+                    if (bracketDepth > 0) bracketDepth--;
+                    break;
+                case '{':
+                    braceDepth++;
+                    break;
+                case '}':
+                    if (braceDepth > 0) braceDepth--;
+                    break;
+                default:
+                    if (ch == target && angleDepth == 0 && parenDepth == 0 && bracketDepth == 0 && braceDepth == 0)
+                        return i;
+                    break;
             }
         }
 
-        return true;
+        return -1;
+    }
+
+    private static int FindLastTopLevelWhitespace(string text)
+    {
+        var angleDepth = 0;
+        var parenDepth = 0;
+        var bracketDepth = 0;
+        var braceDepth = 0;
+        var splitAt = -1;
+        for (var i = 0; i < text.Length; i++)
+        {
+            var ch = text[i];
+            switch (ch)
+            {
+                case '<':
+                    angleDepth++;
+                    break;
+                case '>':
+                    if (angleDepth > 0) angleDepth--;
+                    break;
+                case '(':
+                    parenDepth++;
+                    break;
+                case ')':
+                    if (parenDepth > 0) parenDepth--;
+                    break;
+                case '[':
+                    bracketDepth++;
+                    break;
+                case ']':
+                    if (bracketDepth > 0) bracketDepth--;
+                    break;
+                case '{':
+                    braceDepth++;
+                    break;
+                case '}':
+                    if (braceDepth > 0) braceDepth--;
+                    break;
+                default:
+                    if (char.IsWhiteSpace(ch) && angleDepth == 0 && parenDepth == 0 && bracketDepth == 0 && braceDepth == 0)
+                        splitAt = i;
+                    break;
+            }
+        }
+
+        return splitAt;
+    }
+
+    private static List<string> SplitTopLevel(string text, char separator)
+    {
+        var result = new List<string>();
+        if (string.IsNullOrWhiteSpace(text))
+            return result;
+
+        var angleDepth = 0;
+        var parenDepth = 0;
+        var bracketDepth = 0;
+        var braceDepth = 0;
+        var lastIndex = 0;
+
+        for (var i = 0; i < text.Length; i++)
+        {
+            var ch = text[i];
+            switch (ch)
+            {
+                case '<':
+                    angleDepth++;
+                    break;
+                case '>':
+                    if (angleDepth > 0) angleDepth--;
+                    break;
+                case '(':
+                    parenDepth++;
+                    break;
+                case ')':
+                    if (parenDepth > 0) parenDepth--;
+                    break;
+                case '[':
+                    bracketDepth++;
+                    break;
+                case ']':
+                    if (bracketDepth > 0) bracketDepth--;
+                    break;
+                case '{':
+                    braceDepth++;
+                    break;
+                case '}':
+                    if (braceDepth > 0) braceDepth--;
+                    break;
+                default:
+                    if (ch == separator && angleDepth == 0 && parenDepth == 0 && bracketDepth == 0 && braceDepth == 0)
+                    {
+                        result.Add(text.Substring(lastIndex, i - lastIndex).Trim());
+                        lastIndex = i + 1;
+                    }
+                    break;
+            }
+        }
+
+        if (lastIndex <= text.Length)
+            result.Add(text.Substring(lastIndex).Trim());
+
+        return result;
     }
 
     private static (string? Client, string? Binder) GenerateCode(
@@ -478,15 +747,15 @@ internal static class Program
 
         foreach (var m in svc.Methods)
         {
-            var hasArg = !string.IsNullOrEmpty(m.ArgTypeName);
-            var argType = hasArg ? m.ArgTypeName! : "RpcVoid";
+            var argType = GetRequestPayloadType(m);
             var retType = m.IsVoid ? "RpcVoid" : m.RetTypeName!;
-            var argVal = hasArg ? "req" : "RpcVoid.Instance";
-            var sig = hasArg ? $"{m.Name}({argType} req)" : $"{m.Name}()";
+            var argVal = GetRequestPayloadValue(m);
+            var sig = $"{m.Name}({GetMethodParameterSignature(m)})";
             if (m.IsVoid)
             {
                 clientBody.Append("        public async ValueTask ").Append(sig).Append("\n        {\n");
-                clientBody.Append("            await _client.CallAsync<RpcVoid, RpcVoid>(ServiceId, ").Append(m.MethodId).Append(", RpcVoid.Instance, CancellationToken.None);\n        }\n\n");
+                clientBody.Append("            await _client.CallAsync<").Append(argType).Append(", RpcVoid>(ServiceId, ")
+                    .Append(m.MethodId).Append(", ").Append(argVal).Append(", CancellationToken.None);\n        }\n\n");
             }
             else
             {
@@ -519,26 +788,25 @@ internal static class Program
 
         foreach (var m in svc.Methods)
         {
-            var hasArg = !string.IsNullOrEmpty(m.ArgTypeName);
-            var argType = hasArg ? m.ArgTypeName! : "RpcVoid";
-            var retType = m.IsVoid ? "RpcVoid" : m.RetTypeName!;
+            var argType = GetRequestPayloadType(m);
             binderSb.Append("            server.Register(ServiceId, ").Append(m.MethodId).Append(", async (req, ct) =>\n            {\n");
-            if (hasArg)
-                binderSb.Append("                var arg = server.Serializer.Deserialize<").Append(argType).Append(">(req.Payload.AsSpan())!;\n");
+            if (m.Parameters.Count == 1)
+            {
+                binderSb.Append("                var arg1 = server.Serializer.Deserialize<").Append(argType).Append(">(req.Payload.AsSpan())!;\n");
+            }
+            else if (m.Parameters.Count > 1)
+            {
+                binderSb.Append("                var (").Append(GetDeconstructVariableList(m.Parameters.Count)).Append(") = server.Serializer.Deserialize<")
+                    .Append(argType).Append(">(req.Payload.AsSpan())!;\n");
+            }
             if (m.IsVoid)
             {
-                if (hasArg)
-                    binderSb.Append("                await impl.").Append(m.Name).Append("(arg);\n");
-                else
-                    binderSb.Append("                await impl.").Append(m.Name).Append("();\n");
+                binderSb.Append("                await impl.").Append(m.Name).Append("(").Append(GetInvokeArguments(m.Parameters.Count)).Append(");\n");
                 binderSb.Append("                return new RpcResponseEnvelope { RequestId = req.RequestId, Status = RpcStatus.Ok, Payload = server.Serializer.Serialize(RpcVoid.Instance) };\n");
             }
             else
             {
-                if (hasArg)
-                    binderSb.Append("                var resp = await impl.").Append(m.Name).Append("(arg);\n");
-                else
-                    binderSb.Append("                var resp = await impl.").Append(m.Name).Append("();\n");
+                binderSb.Append("                var resp = await impl.").Append(m.Name).Append("(").Append(GetInvokeArguments(m.Parameters.Count)).Append(");\n");
                 binderSb.Append("                return new RpcResponseEnvelope { RequestId = req.RequestId, Status = RpcStatus.Ok, Payload = server.Serializer.Serialize(resp) };\n");
             }
             binderSb.Append("            });\n\n");
@@ -580,6 +848,49 @@ internal static class Program
         if (baseName.Length == 0)
             return "service";
         return char.ToLowerInvariant(baseName[0]) + baseName.Substring(1);
+    }
+
+    private static string GetMethodParameterSignature(RpcMethodInfo method)
+    {
+        if (method.Parameters.Count == 0)
+            return string.Empty;
+
+        return string.Join(", ", method.Parameters.Select(p => $"{p.TypeName} {p.Name}"));
+    }
+
+    private static string GetRequestPayloadType(RpcMethodInfo method)
+    {
+        if (method.Parameters.Count == 0)
+            return "RpcVoid";
+
+        if (method.Parameters.Count == 1)
+            return method.Parameters[0].TypeName;
+
+        return $"({string.Join(", ", method.Parameters.Select(p => p.TypeName))})";
+    }
+
+    private static string GetRequestPayloadValue(RpcMethodInfo method)
+    {
+        if (method.Parameters.Count == 0)
+            return "RpcVoid.Instance";
+
+        if (method.Parameters.Count == 1)
+            return method.Parameters[0].Name;
+
+        return $"({string.Join(", ", method.Parameters.Select(p => p.Name))})";
+    }
+
+    private static string GetDeconstructVariableList(int parameterCount)
+    {
+        return string.Join(", ", Enumerable.Range(1, parameterCount).Select(i => $"arg{i}"));
+    }
+
+    private static string GetInvokeArguments(int parameterCount)
+    {
+        if (parameterCount == 0)
+            return string.Empty;
+
+        return string.Join(", ", Enumerable.Range(1, parameterCount).Select(i => $"arg{i}"));
     }
 
     private static IReadOnlyList<string> GetContractNamespaces(RpcServiceInfo svc)
@@ -669,17 +980,29 @@ internal static class Program
     {
         public string Name { get; }
         public int MethodId { get; }
-        public string? ArgTypeName { get; }
+        public List<RpcParameterInfo> Parameters { get; }
         public string? RetTypeName { get; }
         public bool IsVoid { get; }
 
-        public RpcMethodInfo(string name, int methodId, string? argTypeName, string? retTypeName, bool isVoid)
+        public RpcMethodInfo(string name, int methodId, List<RpcParameterInfo> parameters, string? retTypeName, bool isVoid)
         {
             Name = name;
             MethodId = methodId;
-            ArgTypeName = argTypeName;
+            Parameters = parameters;
             RetTypeName = retTypeName;
             IsVoid = isVoid;
+        }
+    }
+
+    private sealed class RpcParameterInfo
+    {
+        public string TypeName { get; }
+        public string Name { get; }
+
+        public RpcParameterInfo(string typeName, string name)
+        {
+            TypeName = typeName;
+            Name = name;
         }
     }
 

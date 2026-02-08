@@ -5,11 +5,16 @@ namespace ULinkRPC.Runtime
 {
     public sealed class JsonRpcSerializer : IRpcSerializer
     {
-        private readonly JsonSerializerOptions? _options;
+        private readonly JsonSerializerOptions _options;
 
         public JsonRpcSerializer(JsonSerializerOptions? options = null)
         {
-            _options = options;
+            _options = options is null
+                ? new JsonSerializerOptions()
+                : new JsonSerializerOptions(options);
+
+            // Required for ValueTuple payloads used by multi-parameter RPC methods.
+            _options.IncludeFields = true;
         }
 
         public byte[] Serialize<T>(T value)
