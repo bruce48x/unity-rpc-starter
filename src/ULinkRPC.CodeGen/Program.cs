@@ -463,9 +463,12 @@ internal static class Program
     {
         var ifaceName = svc.InterfaceName;
         var clientTypeName = GetClientTypeName(ifaceName);
+        var contractUsings = GetContractNamespaces(svc);
 
         var clientBody = new StringBuilder();
-        clientBody.Append("using System.Threading;\nusing System.Threading.Tasks;\nusing Game.Rpc.Contracts;\nusing Game.Rpc.Runtime;\n\nnamespace ")
+        clientBody.Append("using System.Threading;\nusing System.Threading.Tasks;\n")
+            .Append(FormatUsingBlock(contractUsings))
+            .Append("using Game.Rpc.Runtime;\n\nnamespace ")
             .Append(runtimeNamespace)
             .Append("\n{\n");
         clientBody.Append("    public sealed class ").Append(clientTypeName).Append(" : ").Append(ifaceName).Append("\n    {\n");
@@ -501,8 +504,11 @@ internal static class Program
     {
         var ifaceName = svc.InterfaceName;
         var binderTypeName = GetBinderTypeName(ifaceName);
+        var contractUsings = GetContractNamespaces(svc);
         var binderSb = new StringBuilder();
-        binderSb.Append("using System;\nusing Game.Rpc.Contracts;\nusing ")
+        binderSb.Append("using System;\n")
+            .Append(FormatUsingBlock(contractUsings))
+            .Append("using ")
             .Append(runtimeUsing)
             .Append(";\n\nnamespace ")
             .Append(ns)
@@ -544,8 +550,10 @@ internal static class Program
 
     private static string GenerateAllServicesBinder(List<RpcServiceInfo> services, string ns, string runtimeUsing)
     {
+        var contractUsings = GetContractNamespaces(services);
         var sb = new StringBuilder();
-        sb.Append("using Game.Rpc.Contracts;\nusing ")
+        sb.Append(FormatUsingBlock(contractUsings))
+            .Append("using ")
             .Append(runtimeUsing)
             .Append(";\n\nnamespace ")
             .Append(ns)
@@ -572,6 +580,37 @@ internal static class Program
         if (baseName.Length == 0)
             return "service";
         return char.ToLowerInvariant(baseName[0]) + baseName.Substring(1);
+    }
+
+    private static IReadOnlyList<string> GetContractNamespaces(RpcServiceInfo svc)
+    {
+        var ns = GetNamespaceFromFullName(svc.InterfaceFullName);
+        return string.IsNullOrWhiteSpace(ns)
+            ? Array.Empty<string>()
+            : new[] { ns };
+    }
+
+    private static IReadOnlyList<string> GetContractNamespaces(IEnumerable<RpcServiceInfo> services)
+    {
+        return services
+            .Select(svc => GetNamespaceFromFullName(svc.InterfaceFullName))
+            .Where(ns => !string.IsNullOrWhiteSpace(ns))
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+    }
+
+    private static string GetNamespaceFromFullName(string fullName)
+    {
+        var lastDot = fullName.LastIndexOf('.');
+        return lastDot > 0 ? fullName.Substring(0, lastDot) : string.Empty;
+    }
+
+    private static string FormatUsingBlock(IEnumerable<string> namespaces)
+    {
+        var sb = new StringBuilder();
+        foreach (var ns in namespaces)
+            sb.Append("using ").Append(ns).Append(";\n");
+        return sb.ToString();
     }
 
     private static string GetDefaultServerNamespace(List<RpcServiceInfo> services)
